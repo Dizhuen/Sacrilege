@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SACRILEGE | ANXIOUS LUXURY</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=JetBrains+Mono:wght@100;400;800&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        serif: ['Cinzel', 'serif'], 
+                        mono: ['JetBrains Mono', 'monospace'],
+                        wide: ['Syncopate', 'sans-serif']
+                    },
+                    colors: { red: { 600: '#DC2626', 900: '#7F1D1D' } },
+                    animation: { 'pulse-fast': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="relative min-h-screen">
+
+    <!-- PRELOADER -->
+    <div id="preloader" class="fixed inset-0 z-[999] bg-black flex flex-col items-center justify-center font-mono text-red-600 transition-all duration-700">
+        <div class="text-4xl md:text-5xl font-black tracking-tighter animate-pulse glitch-text" data-text="SACRILEGE">SACRILEGE</div>
+        <div class="mt-4 text-[10px] text-neutral-600 flex gap-2"><span data-i18n="boot_sys">SYSTEM_BOOT</span><span class="animate-pulse">_</span></div>
+        <div class="w-48 h-[2px] bg-neutral-900 mt-4 overflow-hidden"><div class="h-full bg-red-600 animate-[marquee_1s_linear_infinite]" style="width: 50%"></div></div>
+    </div>
+
+    <!-- AUDIO -->
+    <audio id="bg-audio" loop preload="auto"><source src="humloop.mp3" type="audio/mpeg"></audio>
+
+    <!-- LAYERS -->
+    <div class="pointer-events-none fixed inset-0 z-[90] opacity-[0.12] mix-blend-overlay"><div class="absolute inset-0 noise-bg"></div></div>
+    <div class="pointer-events-none fixed inset-0 z-[80] crt-overlay"></div>
+    <div id="flashlight-layer"></div>
+    
+    <!-- PSYCHOSIS LAYER -->
+    <div id="psychosis-layer"></div>
+    
+    <div id="chaos-overlay"></div>
+    <div id="cursor-ring" class="hardware-accel"></div>
+    <div id="cursor-dot" class="hardware-accel"></div>
+    
+    <div id="cursor-glitch" class="hardware-accel fixed pointer-events-none z-[10000] mix-blend-difference hidden"></div>
+
+    <!-- HEADER -->
+    <header class="fixed top-0 w-full z-50 flex justify-between items-center px-4 md:px-6 py-6 mix-blend-difference text-white">
+        <div class="flex gap-4">
+            <button class="hover:text-red-600 magnet-btn p-2 hover-trigger relative group" onclick="alert('ACCESS DENIED')"><i data-lucide="menu"></i></button>
+            <button id="lang-btn" class="hover:text-red-600 magnet-btn p-2 text-neutral-500 hover-trigger font-mono text-xs" onclick="toggleLanguage()"><i data-lucide="globe"></i> <span id="lang-display">EN</span></button>
+            <button id="theme-btn" class="hover:text-red-600 magnet-btn p-2 text-neutral-500 hover-trigger" onclick="toggleTheme()"><i data-lucide="eye" id="theme-icon"></i></button>
+            <button id="sound-btn" class="hover:text-red-600 magnet-btn p-2 hover-trigger" onclick="toggleSound()"><i data-lucide="volume-x" id="sound-icon"></i></button>
+        </div>
+        
+        <h1 id="brand-logo" onclick="triggerEasterEgg()" class="absolute left-1/2 -translate-x-1/2 text-lg md:text-2xl font-serif font-black tracking-[0.4em] select-none cursor-pointer hover-trigger truncate max-w-[50%] text-center hover:text-red-600 transition-colors active:scale-95">SACRILEGE</h1>
+
+        <button onclick="toggleCart(true)" class="hover:text-red-600 transition-colors relative magnet-btn p-2 hover-trigger">
+            <i data-lucide="shopping-bag" width="20"></i>
+            <span id="cart-badge" class="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-600 hidden animate-pulse"></span>
+        </button>
+    </header>
+
+    <!-- MAIN -->
+    <main id="site-content" class="w-full relative z-10">
+        <!-- HERO -->
+        <section class="relative h-screen w-full flex items-center justify-center overflow-hidden touch-none">
+            <div id="hero-blob" class="absolute w-[800px] h-[800px] bg-red-900/20 rounded-full blur-[150px] animate-pulse-fast pointer-events-none"></div>
+            
+            <div class="z-10 text-center flex flex-col items-center gap-6 mix-blend-normal px-4 reveal-item active w-full">
+                <div id="hero-parallax" class="parallax-wrapper h-[15vw] md:h-[12vw] w-full relative">
+                    <h2 class="parallax-layer layer-back font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.05" data-i18n="hero_loading">LOADING...</h2>
+                    <h2 class="parallax-layer layer-mid font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.1" data-i18n="hero_loading">LOADING...</h2>
+                    <h2 class="parallax-layer layer-front font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.15" data-i18n="hero_loading">LOADING...</h2>
+                </div>
+                <div class="overflow-hidden w-full flex justify-center">
+                    <span id="hero-sub" class="text-red-600 font-wide font-bold text-[4vw] md:text-[2vw] tracking-[0.3em] md:tracking-[0.8em] block mt-4 border-y border-red-900/50 py-2 translate-y-full transition-transform duration-1000 delay-500">...</span>
+                </div>
+                <p class="font-mono text-[10px] md:text-xs text-theme-muted mt-10 animate-bounce" data-i18n="scroll_explore">SCROLL TO EXPLORE</p>
+            </div>
+        </section>
+
+        <!-- TICKER -->
+        <div class="border-y border-theme bg-theme-secondary py-4 overflow-hidden relative z-10 ticker-container">
+            <div class="ticker-wrap font-wide text-[10px] md:text-xs font-bold tracking-[0.3em] text-theme-muted" id="ticker-content"></div>
+        </div>
+
+        <!-- DYNAMIC SHOP -->
+        <div id="shop-container" class="px-4 py-20 md:py-32 max-w-[1600px] mx-auto relative z-10"></div>
+
+        <!-- REVIEWS -->
+        <section class="px-4 py-20 max-w-[1600px] mx-auto relative z-10 border-t border-theme">
+             <div class="w-full reveal-item">
+                 <h4 class="font-mono text-xs text-theme-muted mb-6 flex justify-between">
+                     <span data-i18n="global_log">/// GLOBAL_TRANSMISSION_LOG</span>
+                     <span class="animate-pulse text-red-600" data-i18n="live_status">LIVE</span>
+                 </h4>
+                 <div id="reviews-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar"></div>
+             </div>
+        </section>
+
+        <footer class="bg-theme-secondary border-t border-theme py-20 px-6 relative z-10 text-center font-mono text-xs text-theme-muted reveal-item">
+            <div class="mb-4 text-theme-color font-bold" data-i18n="footer_motto">NO EXIT. NO RETURN.</div>
+            © 2026 SACRILEGE INDUSTRIES.
+        </footer>
+    </main>
+
+    <!-- PRODUCT MODAL -->
+    <!-- FIX: Changed items-center to a safe handling to prevent cutoff on mobile -->
+<div id="product-modal" class="fixed inset-0 z-[150] hidden flex flex-col md:justify-center items-center bg-black/80 p-0 md:p-4 transition-opacity duration-300 overflow-hidden h-full safe-area-padding">
+    
+    <!-- SIGILS - MOVED OUTSIDE modal-content -->
+    <div id="modal-sigils-container" class="absolute inset-0 pointer-events-none select-none overflow-hidden" style="z-index: 1;">
+        <!-- Left Group -->
+        <div class="absolute" style="top: 50%; left: -20vh; transform: translateY(-50%); opacity: 0.2; mix-blend-mode: difference; pointer-events: none;">
+            <div class="absolute animate-hover-sway hardware-accel" style="width: 80vh; height: 80vh; border: 1px dashed #DC2626; border-radius: 50%;"></div>
+            <div class="absolute animate-hover-sway-reverse hardware-accel" style="width: 60vh; height: 60vh; border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 50%; top: 10vh; left: 10vh;"></div>
+        </div>
+        
+        <!-- Right Group -->
+        <div class="absolute" style="top: 50%; right: -20vh; transform: translateY(-50%); opacity: 0.2; mix-blend-mode: difference; pointer-events: none;">
+            <div class="absolute animate-hover-sway-delayed hardware-accel" style="width: 90vh; height: 90vh; border: 1px dotted #DC2626; border-radius: 50%;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL CONTENT WRAPPER -->
+    <!-- FIX: Added max-h settings and width adjustments for mobile -->
+    <div class="bg-theme-main border border-red-900/50 w-full md:max-w-6xl h-full md:h-[85vh] md:max-h-[90vh] relative shadow-[0_0_50px_rgba(220,38,38,0.1)] flex flex-col md:flex-row overflow-hidden modal-enter rounded-none md:rounded-sm" id="modal-content" style="z-index: 10;">
+        
+        <button onclick="closeProductModal()" class="absolute top-4 right-4 text-theme-color z-50 hover:text-red-600 transition-colors hover-trigger bg-theme-main p-2 border border-theme-light rounded-full"><i data-lucide="x"></i></button>
+
+        <!-- REST OF MODAL CONTENT STAYS THE SAME -->
+        <!-- LEFT: GALLERY -->
+        <div class="w-full md:w-2/3 h-[45vh] md:h-full bg-black relative border-b md:border-b-0 md:border-r border-red-900/30 flex flex-col select-none group shrink-0">
+            <div class="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing" id="gallery-viewport">
+                <div id="slider-track" class="flex h-full w-full transition-transform duration-300 ease-out will-change-transform"></div>
+                <button id="prev-slide" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur text-white p-3 hover:bg-red-600 hover:text-black transition-colors rounded-full hidden hover-trigger border border-white/10 z-20 pointer-events-auto"><i data-lucide="chevron-left"></i></button>
+                <button id="next-slide" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur text-white p-3 hover:bg-red-600 hover:text-black transition-colors rounded-full hidden hover-trigger border border-white/10 z-20 pointer-events-auto"><i data-lucide="chevron-right"></i></button>
+            </div>
+            <div class="h-20 bg-neutral-900 border-t border-neutral-800 flex items-center px-4 gap-3 overflow-x-auto scrollbar-hide z-30" id="modal-gallery-strip"></div>
+        </div>
+
+        <!-- RIGHT: INFO -->
+        <!-- FIX: Added overflow-y-auto and padding adjustments for safe scrolling on mobile -->
+        <div class="w-full md:w-1/3 h-full flex flex-col bg-theme-main relative z-30 overflow-y-auto custom-scrollbar pb-safe">
+            <div class="p-6 md:p-10 pt-6 md:pt-20">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-xs font-mono text-red-600 animate-pulse">/// <span id="system-label">ARCHIVE_REF</span>_00<span id="ref-id">X</span></span>
+                    <span class="text-xs font-mono text-theme-muted" id="modal-category">CATEGORY</span>
+                </div>
+                <h2 id="modal-product-name" class="font-serif text-3xl md:text-5xl text-theme-color leading-[0.85] tracking-tight mb-4 glitch-text" data-text="">PRODUCT</h2>
+                <p id="modal-product-price" class="font-mono text-2xl text-red-500 mb-8 border-b border-theme pb-4">$0.00</p>
+                
+                <div class="font-mono text-xs text-theme-muted mb-8 leading-relaxed overflow-hidden relative min-h-[60px]">
+                    <p id="modal-desc" class="break-words will-change-contents">CONNECTING TO DATABASE...</p>
+                </div>
+
+                <div class="space-y-4 mb-8">
+                    <div class="font-mono text-[10px] text-theme-muted tracking-widest" data-i18n="size_select">SIZE_SELECTION</div>
+                    <div class="grid grid-cols-4 gap-2" id="size-selector">
+                        <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" onclick="selectSize('S', this)">S</button>
+                        <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" onclick="selectSize('M', this)">M</button>
+                        <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" onclick="selectSize('L', this)">L</button>
+                        <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" onclick="selectSize('XL', this)">XL</button>
+                    </div>
+                </div>
+                
+                <button id="confirm-add-btn" class="w-full bg-red-600 text-black font-wide font-bold py-4 text-sm tracking-widest hover:bg-white hover:text-red-600 transition-all duration-300 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed hover-trigger relative overflow-hidden group mb-8" disabled>
+                    <span class="relative z-10" id="btn-text" data-i18n="btn_add">[BIND TO SOUL]</span>
+                    <div class="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-0"></div>
+                </button>
+
+                <div class="border-t border-theme pt-6">
+                    <h5 class="text-xs font-mono text-theme-muted mb-4 cursor-pointer hover:text-theme-color flex justify-between items-center" onclick="toggleReviewForm()">
+                         <span data-i18n="leave_review">[+] LEAVE PROTOCOL ENTRY</span>
+                    </h5>
+                    <div id="product-review-area" class="space-y-3 overflow-hidden transition-[max-height,opacity] duration-500 ease-in-out max-h-[500px] opacity-100">
+                        <input id="rev-name" placeholder="IDENTIFIER (NAME)" class="bg-theme-secondary text-theme-color text-xs md:text-sm p-3 w-full border border-theme focus:border-red-600 font-mono" data-i18n-ph="ph_name">
+                        <textarea id="rev-satisfied" placeholder="SATISFIED ABOUT..." rows="2" class="bg-theme-secondary text-theme-color text-xs md:text-sm p-3 w-full border border-theme focus:border-green-600 font-mono resize-none" data-i18n-ph="ph_sat"></textarea>
+                        <textarea id="rev-disgruntled" placeholder="DISGRUNTLED ABOUT..." rows="2" class="bg-theme-secondary text-theme-color text-xs md:text-sm p-3 w-full border border-theme focus:border-red-600 font-mono resize-none" data-i18n-ph="ph_dis"></textarea>
+                        <button onclick="submitProductReview()" class="w-full bg-neutral-800 text-white text-xs font-bold py-3 hover:bg-white hover:text-black transition-colors tracking-widest" data-i18n="btn_transmit">TRANSMIT ENTRY</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- CHECKOUT MODAL -->
+    <div id="checkout-modal" class="fixed inset-0 z-[250] hidden flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 safe-area-padding">
+        <div class="bg-theme-main border border-theme max-w-lg w-full relative shadow-2xl overflow-y-auto max-h-[90vh] rounded-sm">
+            <div class="p-6 border-b border-theme flex justify-between items-center sticky top-0 bg-theme-main z-10">
+                <h2 class="font-serif text-xl text-theme-color" data-i18n="checkout_title">SHIPPING_DETAILS</h2>
+                <button onclick="document.getElementById('checkout-modal').classList.add('hidden')" class="hover-trigger"><i data-lucide="x" class="text-red-600"></i></button>
+            </div>
+            <div class="p-6 md:p-8">
+                <form id="checkout-form" class="space-y-4">
+                    <div class="grid grid-cols-1 gap-4"><input name="fullname" placeholder="FULL NAME" required data-i18n-ph="ph_fullname"><input name="phone" placeholder="PHONE (WHATSAPP)" required data-i18n-ph="ph_phone"></div>
+                    <input name="address" placeholder="STREET ADDRESS" required data-i18n-ph="ph_address">
+                    <div class="grid grid-cols-2 gap-4"><input name="city" placeholder="CITY" required data-i18n-ph="ph_city"><input name="zip" placeholder="ZIP CODE" required data-i18n-ph="ph_zip"></div>
+                    <div class="mt-6 border-t border-theme pt-4 flex justify-between font-serif text-xl text-theme-color"><span data-i18n="total">TOTAL</span><span id="checkout-total">$0</span></div>
+                    <button type="submit" class="w-full bg-white text-black font-wide font-bold py-4 mt-6 hover:bg-red-600 hover:text-white transition-all duration-300 hover-trigger" data-i18n="btn_order">PLACE ORDER</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CART DRAWER -->
+    <div id="cart-drawer" class="fixed inset-y-0 right-0 z-[200] w-full md:w-[450px] bg-theme-main border-l border-red-900 drawer flex flex-col">
+        <div class="p-6 border-b border-theme flex justify-between items-center bg-theme-main">
+            <h2 class="font-mono text-xl text-theme-color">:: <span data-i18n="cart_title">CART</span> [<span id="cart-count-header">0</span>]</h2>
+            <button onclick="toggleCart(false)" class="hover-trigger"><i data-lucide="x" class="text-red-600"></i></button>
+        </div>
+        <div id="cart-items" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4"></div>
+        <div class="p-6 border-t border-theme bg-theme-secondary backdrop-blur pb-10 md:pb-6">
+            <div class="flex justify-between font-serif text-xl mb-4 text-theme-color"><span data-i18n="total">TOTAL</span><span>$<span id="cart-total">0</span></span></div>
+            <button onclick="openCheckout()" class="w-full bg-red-600 text-black font-wide font-bold py-4 hover:bg-white transition-all duration-300 hover-trigger" data-i18n="btn_checkout">CHECKOUT</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
