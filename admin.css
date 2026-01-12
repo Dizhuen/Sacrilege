@@ -19,3 +19,7 @@ input:focus, textarea:focus { outline: none; border-color: #ef4444; ring: 1px so
 .tab-inactive { color: #a1a1aa; border-bottom: 2px solid transparent; }
 .checkbox-wrapper { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
 .checkbox-wrapper input { width: auto; }
+.gallery-item { transition: transform 0.2s; }
+.gallery-item:hover { transform: scale(1.02); }
+.gallery-item.dragging { opacity: 0.5; }
+#gallery-list { min-height: 120px; }

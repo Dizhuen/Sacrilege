@@ -325,10 +325,24 @@ async function loadConfig() {
     try {
         const { data } = await sb.from('site_config').select('*').single();
         if(data) {
-            document.querySelectorAll('.parallax-layer').forEach(l => l.innerText = data.hero_title);
-            const sub = document.getElementById('hero-sub'); if(sub) sub.innerText = data.hero_subtitle;
-            const tick = document.getElementById('ticker-content'); if(tick) tick.innerHTML = `<span>${data.ticker_text + " /// "}</span>`.repeat(10);
+            document.querySelectorAll('.parallax-layer').forEach(l => l.innerText = data.hero_title || 'LOADING...');
+            const sub = document.getElementById('hero-sub'); if(sub) sub.innerText = data.hero_subtitle || '...';
+            const tick = document.getElementById('ticker-content'); if(tick) tick.innerHTML = `<span>${(data.ticker_text || 'SACRILEGE') + " /// "}</span>`.repeat(10);
             if(data.system_label) systemLabel = data.system_label;
+            const waValue = data.contact_whatsapp || data.contact_telegram;
+            if(waValue) {
+                const wa = document.getElementById('contact-whatsapp');
+                if(wa) { wa.href = waValue.startsWith('http') ? waValue : `https://wa.me/${waValue.replace(/[^0-9]/g, '')}`; wa.style.display = 'flex'; }
+            }
+            if(data.contact_telegram) {
+                const tg = document.getElementById('contact-telegram');
+                if(tg) { tg.href = data.contact_telegram.startsWith('http') ? data.contact_telegram : `https://t.me/${data.contact_telegram.replace('@', '')}`; tg.style.display = 'flex'; }
+            }
+            if(data.contact_email) {
+                const em = document.getElementById('contact-email');
+                if(em) { em.href = `mailto:${data.contact_email}`; em.style.display = 'flex'; }
+            }
+            lucide.createIcons();
         }
     } catch(e) { console.warn("Config load failed (check Supabase Key)"); }
 }
@@ -356,16 +370,22 @@ function renderSections(collections) {
         container.innerHTML = `<div class="text-center font-mono text-theme-muted mt-20">VOID IS EMPTY</div>`;
     } else {
         let html = '';
-        collections.forEach(col => {
+        const validCollections = collections.filter(col => {
             const colProducts = productsData.filter(p => p.collection_id === col.id);
-            if(colProducts.length === 0) return;
+            return colProducts.length > 0;
+        });
+        validCollections.forEach((col, idx) => {
+            const colProducts = productsData.filter(p => p.collection_id === col.id);
             const gridHtml = colProducts.map(p => getProductCardHTML(p)).join('');
-            html += `<div class="mb-20 border-b border-theme pb-10"><div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 reveal-item active gap-2"><h3 class="font-serif text-3xl md:text-4xl text-theme-color">${col.title}</h3><span class="font-wide text-[10px] md:text-xs text-red-600 tracking-widest" data-i18n="ready_ship">/// READY TO SHIP</span></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">${gridHtml}</div></div>`;
+            const isLast = idx === validCollections.length - 1;
+            const orphans = productsData.filter(p => !p.collection_id);
+            const borderClass = (isLast && orphans.length === 0) ? '' : 'border-b border-theme';
+            html += `<div class="mb-20 ${borderClass} pb-10"><div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 reveal-item active gap-2"><h3 class="font-serif text-3xl md:text-4xl text-theme-color">${col.title}</h3><span class="font-wide text-[10px] md:text-xs text-red-600 tracking-widest" data-i18n="ready_ship">/// READY TO SHIP</span></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">${gridHtml}</div></div>`;
         });
         const orphans = productsData.filter(p => !p.collection_id);
         if(orphans.length > 0) {
             const gridHtml = orphans.map(p => getProductCardHTML(p)).join('');
-            html += `<div class="mb-20 border-b border-theme pb-10"><div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 reveal-item active gap-2"><h3 class="font-serif text-3xl md:text-4xl text-theme-color">ARCHIVE</h3></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">${gridHtml}</div></div>`;
+            html += `<div class="mb-20 pb-10"><div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 reveal-item active gap-2"><h3 class="font-serif text-3xl md:text-4xl text-theme-color">ARCHIVE</h3></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">${gridHtml}</div></div>`;
         }
         container.innerHTML = html;
         container.querySelectorAll('.reveal-item').forEach(el => el.classList.add('active'));
@@ -398,8 +418,8 @@ function generateSigils() {
         div.style.width = `${size}px`;
         div.style.height = `${size}px`;
         div.style.pointerEvents = 'none';
-        div.style.zIndex = '0';
-        div.style.opacity = '0.3';
+        div.style.zIndex = '1';
+        div.style.opacity = '0.4';
         div.style.mixBlendMode = 'difference';
         const isLeft = Math.random() > 0.5;
         if(isLeft) div.style.left = `-${size/2}px`; else div.style.right = `-${size/2}px`;
@@ -411,10 +431,13 @@ function generateSigils() {
         else if(type === 'line') svg = `<svg width="100%" height="100%" viewBox="0 0 100 100"><line x1="0" y1="50" x2="100" y2="50" stroke="${stroke}" stroke-width="1" /></svg>`;
         else svg = `<svg width="100%" height="100%" viewBox="0 0 100 100"><polygon points="50,5 95,95 5,95" fill="none" stroke="${stroke}" stroke-width="0.5" /></svg>`;
         div.innerHTML = svg;
-        div.animate([{ transform: `translateY(-50%) rotate(0deg)` }, { transform: `translateY(-50%) rotate(360deg)` }], { duration: Math.random() * 20000 + 20000, iterations: Infinity, direction: Math.random() > 0.5 ? 'normal' : 'reverse' });
+        const anim = div.animate([{ transform: `translateY(-50%) rotate(0deg)` }, { transform: `translateY(-50%) rotate(360deg)` }], { duration: Math.random() * 20000 + 20000, iterations: Infinity, direction: Math.random() > 0.5 ? 'normal' : 'reverse' });
         return div;
     };
-    for(let i=0; i<3; i++) container.appendChild(createShape());
+    for(let i=0; i<3; i++) {
+        const shape = createShape();
+        container.appendChild(shape);
+    }
 }
 
 window.openProductModal = function(productId) {
@@ -422,18 +445,21 @@ window.openProductModal = function(productId) {
     if(!product) return;
     currentProduct = product; currentSize = null; currentSlideIndex = 0;
     generateSigils();
-    document.getElementById('modal-product-name').innerText = product.name;
-    document.getElementById('modal-product-name').setAttribute('data-text', product.name);
-    document.getElementById('modal-product-price').innerText = `$${product.price}`;
-    document.getElementById('modal-category').innerText = product.category || 'UNCATEGORIZED';
-    document.getElementById('ref-id').innerText = product.id;
-    document.getElementById('system-label').innerText = systemLabel;
+    const nameEl = document.getElementById('modal-product-name');
+    if(nameEl) { nameEl.innerText = product.name; nameEl.setAttribute('data-text', product.name); }
+    const priceEl = document.getElementById('modal-product-price');
+    if(priceEl) priceEl.innerText = `$${product.price}`;
+    const catEl = document.getElementById('modal-category');
+    if(catEl) catEl.innerText = product.category || 'UNCATEGORIZED';
+    const refEl = document.getElementById('ref-id');
+    if(refEl) refEl.innerText = product.id;
+    const labelEl = document.getElementById('system-label');
+    if(labelEl) labelEl.innerText = systemLabel;
     const stock = product.stock || {S:true, M:true, L:true, XL:true};
     const btn = document.getElementById('confirm-add-btn');
     const btnText = document.getElementById('btn-text');
-    btnText.innerText = "[BIND TO SOUL]"; 
-    btn.disabled = true; btn.classList.add('grayscale', 'cursor-not-allowed', 'opacity-50', 'bg-neutral-800'); btn.classList.remove('bg-red-600');
-    btn.onclick = addToCart;
+    if(btnText) btnText.innerText = "[BIND TO SOUL]"; 
+    if(btn) { btn.disabled = true; btn.classList.add('grayscale', 'cursor-not-allowed', 'opacity-50', 'bg-neutral-800'); btn.classList.remove('bg-red-600'); btn.onclick = addToCart; }
     document.querySelectorAll('.size-btn').forEach(btn => {
         const size = btn.innerText; const available = stock[size] === true;
         btn.classList.remove('bg-theme-color', 'text-theme-main', 'border-theme-color', 'disabled');
@@ -453,15 +479,26 @@ window.openProductModal = function(productId) {
         for(let i = 0; i < randomCharsCount; i++) displayText += String.fromCharCode(65 + Math.floor(Math.random() * 26));
         descEl.innerText = displayText; charIndex += speed;
     }, 50);
-    slideImages = [product.image, ...(product.gallery || [])]; slideImages = [...new Set(slideImages)];
-    document.getElementById('slider-track').innerHTML = slideImages.map(img => `<div class="w-full h-full flex-shrink-0 flex items-center justify-center bg-black slider-slide"><img src="${img}" class="w-full h-full object-cover pointer-events-none select-none" draggable="false" style="max-height: 85vh;"></div>`).join('');
-    document.getElementById('modal-gallery-strip').innerHTML = slideImages.map((img, idx) => `<div onclick="goToSlide(${idx})" class="gallery-thumb w-16 h-16 flex-shrink-0 border border-neutral-800 cursor-pointer hover:border-white transition-all overflow-hidden ${idx === 0 ? 'active' : ''}"><img src="${img}" class="w-full h-full object-cover pointer-events-none"></div>`).join('');
+    slideImages = [product.image, ...(product.gallery || [])].filter(img => img && img.trim() !== '');
+    slideImages = [...new Set(slideImages)];
+    const sliderTrack = document.getElementById('slider-track');
+    if(sliderTrack) {
+        sliderTrack.innerHTML = slideImages.map(img => `<div class="w-full h-full flex-shrink-0 flex items-center justify-center bg-black slider-slide"><img src="${img}" class="w-full h-full object-cover pointer-events-none select-none" draggable="false" style="max-height: 85vh;"></div>`).join('');
+    }
+    const galleryStrip = document.getElementById('modal-gallery-strip');
+    if(galleryStrip) {
+        galleryStrip.innerHTML = slideImages.map((img, idx) => `<div onclick="goToSlide(${idx})" class="gallery-thumb w-16 h-16 flex-shrink-0 border border-neutral-800 cursor-pointer hover:border-white transition-all overflow-hidden ${idx === 0 ? 'active' : ''}"><img src="${img}" class="w-full h-full object-cover pointer-events-none"></div>`).join('');
+    }
     updateSliderPosition(); initSliderEvents();
     const formArea = document.getElementById('product-review-area'); 
     if(formArea) { formArea.style.maxHeight = '500px'; formArea.style.opacity = '1'; }
     if(!isMuted) playClickSound();
     document.body.classList.add('modal-open');
-    document.getElementById('product-modal').classList.remove('hidden');
+    const modal = document.getElementById('product-modal');
+    if(modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('active');
+    }
 }
 
 window.addToCart = function() {
@@ -521,9 +558,13 @@ window.selectSize = function(size, btnElement) {
 
 window.closeProductModal = function() { 
     if (!isMuted) playClickSound();
-    if(descInterval) clearInterval(descInterval);
+    if(descInterval) { clearInterval(descInterval); descInterval = null; }
     document.body.classList.remove('modal-open');
-    document.getElementById('product-modal').classList.add('hidden');
+    const modal = document.getElementById('product-modal');
+    if(modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('active');
+    }
     currentProduct = null;
     const sigils = document.getElementById('modal-sigils-container');
     if(sigils) sigils.innerHTML = '';
@@ -609,3 +650,46 @@ function initScrollReveal() {
     setTimeout(() => { document.querySelectorAll('.reveal-item:not(.active)').forEach(el => el.classList.add('active')); }, 500);
 }
 function showToast(text) { Toastify({ text, duration: 3000, gravity: "bottom", position: "right", style: { background: "#000", border: "1px solid #333", color: "white", boxShadow: "0 0 10px rgba(220,38,38,0.2)" } }).showToast(); }
+
+window.toggleMenu = function() {
+    const menu = document.getElementById('nav-menu');
+    if(!menu) return;
+    const isOpening = menu.classList.contains('hidden');
+    menu.classList.toggle('active');
+    menu.classList.toggle('hidden');
+    if(isOpening) {
+        document.body.classList.add('menu-open');
+        if(!isMuted) playClickSound();
+        document.addEventListener('keydown', handleMenuEscape);
+    } else {
+        document.body.classList.remove('menu-open');
+        document.removeEventListener('keydown', handleMenuEscape);
+    }
+    lucide.createIcons();
+};
+
+function handleMenuEscape(e) {
+    if(e.key === 'Escape') {
+        toggleMenu();
+    }
+}
+
+window.scrollToSection = function(sectionId) {
+    const section = document.getElementById(sectionId) || document.querySelector(`#${sectionId}`);
+    if(!section) {
+        if(sectionId === 'hero') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if(sectionId === 'shop-container') {
+            const shop = document.getElementById('shop-container');
+            if(shop) shop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if(sectionId === 'reviews-list') {
+            const reviews = document.getElementById('reviews-list');
+            if(reviews) reviews.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if(sectionId === 'footer') {
+            const footer = document.querySelector('footer');
+            if(footer) footer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return;
+    }
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
