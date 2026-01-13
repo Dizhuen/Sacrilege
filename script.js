@@ -1,5 +1,4 @@
 const SUPABASE_URL = 'https://cjfxgotljzolykpsuxej.supabase.co';
-// ИСПРАВЛЕННЫЙ КЛЮЧ (Восстановлен оригинал)
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZnhnb3RsanpvbHlrcHN1eGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NzI3OTUsImV4cCI6MjA4MzU0ODc5NX0.fZaXCZh9cAZUIq2A-69Xo0wzH_2zKU4k-4VSFRpRCb4';
 const MANAGER_PHONE = '+37362097776';
 
@@ -211,7 +210,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (addBtn) addBtn.onclick = addToCart;
     } catch (e) { 
         console.error("Initialization error:", e); 
-        // Если ошибка 401, выводим подсказку в консоль
         if(e.status === 401) console.warn("CRITICAL: Supabase 401. Check your API Key.");
     } 
     finally { 
@@ -219,7 +217,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             if(preloader) { preloader.style.opacity = "0"; preloader.style.transform = "scaleX(1.5) scaleY(0.01)"; }
             const sub = document.getElementById('hero-sub'); if(sub) sub.style.transform = "translateY(0)"; 
             initScrollReveal();
-            // Force reveal to ensure we don't stay in loading
             document.querySelectorAll('.reveal-item').forEach(el => el.classList.add('active'));
             setTimeout(() => { if(preloader) preloader.style.pointerEvents = "none"; initMagneticButtons(); initHoverTriggers(); }, 500);
         }, 1500);
@@ -380,7 +377,21 @@ function renderSections(collections) {
             const isLast = idx === validCollections.length - 1;
             const orphans = productsData.filter(p => !p.collection_id);
             const borderClass = (isLast && orphans.length === 0) ? '' : 'border-b border-theme';
-            html += `<div class="mb-20 ${borderClass} pb-10"><div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 reveal-item active gap-2"><h3 class="font-serif text-3xl md:text-4xl text-theme-color">${col.title}</h3><span class="font-wide text-[10px] md:text-xs text-red-600 tracking-widest" data-i18n="ready_ship">/// READY TO SHIP</span></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">${gridHtml}</div></div>`;
+            
+            // FIX: Parsing metadata from title (hack to avoid DB migration)
+            const parts = (col.title || '').split('|||');
+            const displayTitle = parts[0] ? parts[0].trim() : col.title;
+            const labelText = parts[1] ? parts[1].trim() : TRANSLATIONS[currentLang].ready_ship;
+            const labelColor = parts[2] ? parts[2].trim() : '#DC2626';
+            
+            html += `
+            <div class="mb-20 ${borderClass} pb-10">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 reveal-item active gap-2">
+                    <h3 class="font-serif text-3xl md:text-4xl text-theme-color">${displayTitle}</h3>
+                    <span class="font-wide text-[10px] md:text-xs tracking-widest" style="color: ${labelColor}">${labelText}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">${gridHtml}</div>
+            </div>`;
         });
         const orphans = productsData.filter(p => !p.collection_id);
         if(orphans.length > 0) {
@@ -395,8 +406,15 @@ function renderSections(collections) {
 
 function getProductCardHTML(p) {
     const stock = p.stock || {S:true, M:true, L:true, XL:true};
-    const isTotallySoldOut = !stock.S && !stock.M && !stock.L && !stock.XL;
-    return `<div class="reveal-item active group relative spotlight-card rounded-md hover-trigger pointer-events-auto" style="z-index: 1;"><div class="absolute top-2 left-2 z-10 bg-black/50 backdrop-blur px-2 py-1 border border-white/10 pointer-events-none"><span class="font-mono text-[10px] ${isTotallySoldOut ? 'text-neutral-500' : 'text-red-500'}">${isTotallySoldOut ? 'SOLD_OUT' : p.tag || 'NEW'}</span></div><div class="relative aspect-[4/5] overflow-hidden bg-neutral-900 ${isTotallySoldOut ? 'grayscale opacity-50' : 'grayscale group-hover:grayscale-0'} transition-all duration-700 ease-out cursor-pointer pointer-events-auto" onclick="openProductModal(${p.id})"><img src="${p.image}" loading="lazy" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none" /><div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"><div class="bg-red-600/90 text-black font-wide font-bold px-4 py-2 text-xs tracking-widest backdrop-blur-sm">VIEW ARTIFACT</div></div></div><div class="mt-4 flex flex-col items-start gap-1 p-2 pointer-events-none"><h3 class="font-serif text-lg leading-none text-theme-color group-hover:text-red-500 transition-colors">${p.name}</h3><div class="w-full flex justify-between items-center border-t border-theme-light pt-2 mt-1"><span class="font-mono text-[10px] text-theme-muted">${p.category || '///'}</span><span class="font-mono text-sm text-theme-muted">$${p.price}</span></div></div></div>`;
+    // FIX: Better stock check (handles strings "true", booleans, etc)
+    const isS = !!stock.S || stock.S === 'true';
+    const isM = !!stock.M || stock.M === 'true';
+    const isL = !!stock.L || stock.L === 'true';
+    const isXL = !!stock.XL || stock.XL === 'true';
+    
+    const isTotallySoldOut = !isS && !isM && !isL && !isXL;
+    
+    return `<div class="reveal-item active group relative spotlight-card rounded-md hover-trigger pointer-events-auto" style="z-index: 1;"><div class="absolute top-2 left-2 z-10 bg-black/50 backdrop-blur px-2 py-1 border border-white/10 pointer-events-none"><span class="font-mono text-[10px] ${isTotallySoldOut ? 'text-neutral-500' : 'text-red-500'}">${isTotallySoldOut ? 'SOLD_OUT' : p.tag || 'NEW'}</span></div><div class="relative aspect-[4/5] overflow-hidden bg-neutral-900 ${isTotallySoldOut ? 'grayscale opacity-50' : 'grayscale group-hover:grayscale-0'} transition-all duration-700 ease-out cursor-pointer pointer-events-auto" onclick="openProductModal(${p.id})"><img src="${p.image}" loading="lazy" class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110 pointer-events-none" /><div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"><div class="bg-red-600/90 text-black font-wide font-bold px-4 py-2 text-xs tracking-widest backdrop-blur-sm">VIEW ARTIFACT</div></div></div><div class="mt-4 flex flex-col items-start gap-1 p-2 pointer-events-none"><h3 class="font-serif text-lg leading-none text-theme-color group-hover:text-red-500 transition-colors">${p.name}</h3><div class="w-full flex justify-between items-center border-t border-theme-light pt-2 mt-1"><span class="font-mono text-[10px] text-theme-muted">${p.category || '///'}</span><span class="font-mono text-sm text-theme-muted">${p.price} L</span></div></div></div>`;
 }
 
 function renderGrid(products, container) {
@@ -448,26 +466,37 @@ window.openProductModal = function(productId) {
     const nameEl = document.getElementById('modal-product-name');
     if(nameEl) { nameEl.innerText = product.name; nameEl.setAttribute('data-text', product.name); }
     const priceEl = document.getElementById('modal-product-price');
-    if(priceEl) priceEl.innerText = `$${product.price}`;
+    if(priceEl) priceEl.innerText = `${product.price} L`; 
     const catEl = document.getElementById('modal-category');
     if(catEl) catEl.innerText = product.category || 'UNCATEGORIZED';
     const refEl = document.getElementById('ref-id');
     if(refEl) refEl.innerText = product.id;
     const labelEl = document.getElementById('system-label');
     if(labelEl) labelEl.innerText = systemLabel;
+    
+    // FIX: Using dataset for exact size matching and checking "true" strings
     const stock = product.stock || {S:true, M:true, L:true, XL:true};
     const btn = document.getElementById('confirm-add-btn');
     const btnText = document.getElementById('btn-text');
     if(btnText) btnText.innerText = "[BIND TO SOUL]"; 
     if(btn) { btn.disabled = true; btn.classList.add('grayscale', 'cursor-not-allowed', 'opacity-50', 'bg-neutral-800'); btn.classList.remove('bg-red-600'); btn.onclick = addToCart; }
+    
     document.querySelectorAll('.size-btn').forEach(btn => {
-        const size = btn.innerText; const available = stock[size] === true;
+        const size = btn.getAttribute('data-size'); // More reliable than innerText
+        const available = stock[size] === true || stock[size] === 'true' || stock[size] === 'on';
+        
         btn.classList.remove('bg-theme-color', 'text-theme-main', 'border-theme-color', 'disabled');
         btn.classList.add('border-theme');
         btn.style.backgroundColor = ''; btn.style.color = '';
-        if(!available) { btn.classList.add('disabled'); btn.removeAttribute('onclick'); } 
-        else { btn.setAttribute('onclick', `selectSize('${size}', this)`); }
+        
+        if(!available) { 
+            btn.classList.add('disabled'); 
+            btn.removeAttribute('onclick'); 
+        } else { 
+            btn.setAttribute('onclick', `selectSize('${size}', this)`); 
+        }
     });
+
     const desc = product.description || "No description available in the archives.";
     const descEl = document.getElementById('modal-desc');
     if(descInterval) clearInterval(descInterval);
@@ -601,21 +630,21 @@ function updateCartUI() {
     document.getElementById('cart-badge').classList.toggle('hidden', cart.length === 0);
     document.getElementById('cart-total').innerText = cart.reduce((sum, item) => sum + item.price, 0);
     if (cart.length === 0) { container.innerHTML = '<div class="text-theme-muted font-mono text-xs text-center mt-10 animate-pulse">VOID IS EMPTY</div>'; return; }
-    container.innerHTML = cart.map((item, index) => `<div class="flex gap-4 bg-theme-secondary p-2 border border-theme relative group animate-pulse-fast"><div class="relative w-16 h-20"><img src="${item.image}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"><div class="absolute bottom-0 right-0 bg-white text-black text-[10px] font-bold px-1">${item.size}</div></div><div class="flex flex-col justify-between w-full"><div><div class="font-serif text-sm text-theme-color">${item.name}</div><div class="font-mono text-xs text-red-500">$${item.price}</div></div><button onclick="removeFromCart(${index})" class="text-[10px] font-mono text-theme-muted text-left hover:text-theme-color hover-trigger">REMOVE</button></div></div>`).join('');
+    container.innerHTML = cart.map((item, index) => `<div class="flex gap-4 bg-theme-secondary p-2 border border-theme relative group animate-pulse-fast"><div class="relative w-16 h-20"><img src="${item.image}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"><div class="absolute bottom-0 right-0 bg-white text-black text-[10px] font-bold px-1">${item.size}</div></div><div class="flex flex-col justify-between w-full"><div><div class="font-serif text-sm text-theme-color">${item.name}</div><div class="font-mono text-xs text-red-500">${item.price} L</div></div><button onclick="removeFromCart(${index})" class="text-[10px] font-mono text-theme-muted text-left hover:text-theme-color hover-trigger">REMOVE</button></div></div>`).join('');
 }
 window.removeFromCart = function(index) { cart.splice(index, 1); saveCart(); }
 window.toggleCart = function(open) { const drawer = document.getElementById('cart-drawer'); open ? drawer.classList.add('open') : drawer.classList.remove('open'); }
 window.openCheckout = function() {
     if(cart.length === 0) return;
     const modal = document.getElementById('checkout-modal'); modal.classList.remove('hidden');
-    document.getElementById('checkout-total').innerText = '$' + cart.reduce((sum, item) => sum + item.price, 0);
+    document.getElementById('checkout-total').innerText = cart.reduce((sum, item) => sum + item.price, 0) + ' L';
     toggleCart(false);
 }
 document.getElementById('checkout-form').addEventListener('submit', (e) => {
     e.preventDefault(); const formData = new FormData(e.target);
     let message = `:: ORDER ::\nName: ${formData.get('fullname')}\nPhone: ${formData.get('phone')}\nAddr: ${formData.get('address')}, ${formData.get('city')}\n\nITEMS:\n`;
-    cart.forEach(item => { message += `- ${item.name} (${item.size}) $${item.price}\n`; });
-    message += `\nTOTAL: $${document.getElementById('cart-total').innerText}`;
+    cart.forEach(item => { message += `- ${item.name} (${item.size}) ${item.price} L\n`; });
+    message += `\nTOTAL: ${document.getElementById('cart-total').innerText} L`;
     window.open(`https://wa.me/${MANAGER_PHONE}?text=${encodeURIComponent(message)}`, '_blank');
 });
 
@@ -654,42 +683,53 @@ function showToast(text) { Toastify({ text, duration: 3000, gravity: "bottom", p
 window.toggleMenu = function() {
     const menu = document.getElementById('nav-menu');
     if(!menu) return;
-    const isOpening = menu.classList.contains('hidden');
-    menu.classList.toggle('active');
-    menu.classList.toggle('hidden');
-    if(isOpening) {
+    const isOpening = !menu.classList.contains('active');
+    
+    // Toggle active state
+    if (isOpening) {
+        menu.classList.add('active');
         document.body.classList.add('menu-open');
         if(!isMuted) playClickSound();
         document.addEventListener('keydown', handleMenuEscape);
     } else {
+        menu.classList.remove('active');
         document.body.classList.remove('menu-open');
         document.removeEventListener('keydown', handleMenuEscape);
     }
+    
     lucide.createIcons();
 };
 
 function handleMenuEscape(e) {
     if(e.key === 'Escape') {
-        toggleMenu();
+        const menu = document.getElementById('nav-menu');
+        if(menu && menu.classList.contains('active')) toggleMenu();
     }
 }
 
-window.scrollToSection = function(sectionId) {
+window.scrollToSection = function(sectionId, event) {
+    if (event) event.preventDefault();
+    
+    // Close menu first
+    const menu = document.getElementById('nav-menu');
+    if(menu && menu.classList.contains('active')) {
+        toggleMenu();
+        // Wait for animation to finish
+        setTimeout(() => performScroll(sectionId), 600);
+    } else {
+        performScroll(sectionId);
+    }
+};
+
+function performScroll(sectionId) {
     const section = document.getElementById(sectionId) || document.querySelector(`#${sectionId}`);
     if(!section) {
-        if(sectionId === 'hero') {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else if(sectionId === 'shop-container') {
-            const shop = document.getElementById('shop-container');
-            if(shop) shop.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else if(sectionId === 'reviews-list') {
-            const reviews = document.getElementById('reviews-list');
-            if(reviews) reviews.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else if(sectionId === 'footer') {
+        if(sectionId === 'hero') window.scrollTo({ top: 0, behavior: 'smooth' });
+        else if(sectionId === 'footer') {
             const footer = document.querySelector('footer');
             if(footer) footer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         return;
     }
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-};
+}

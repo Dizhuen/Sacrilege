@@ -15,170 +15,116 @@
     <div id="auth-screen" class="fixed inset-0 z-50 bg-[#09090b] flex items-center justify-center p-4">
         <div class="w-full max-w-sm bg-[#18181b] p-8 rounded-xl border border-[#27272a] shadow-2xl">
             <h2 class="text-xl font-bold mb-2 text-white">System Access</h2>
-            <div id="login-tab" class="space-y-4">
-                <form id="login-form" class="space-y-4">
-                    <input type="email" id="login-email" placeholder="EMAIL" class="text-center font-mono tracking-widest" required autocomplete="email">
-                    <input type="password" id="login-password" placeholder="PASSWORD" class="text-center font-mono tracking-widest" required autocomplete="current-password">
-                    <button type="submit" class="btn btn-primary w-full">SIGN IN</button>
-                </form>
-                <div class="text-center">
-                    <button type="button" id="switch-to-magic-link" class="text-xs text-gray-400 hover:text-white">Use Magic Link</button>
-                </div>
-            </div>
-            <div id="magic-link-tab" class="space-y-4 hidden">
-                <form id="magic-link-form" class="space-y-4">
-                    <input type="email" id="magic-email" placeholder="EMAIL" class="text-center font-mono tracking-widest" required autocomplete="email">
-                    <button type="submit" class="btn btn-primary w-full">SEND MAGIC LINK</button>
-                </form>
-                <div class="text-center">
-                    <button type="button" id="switch-to-password" class="text-xs text-gray-400 hover:text-white">Use Password</button>
-                </div>
-            </div>
+            <form id="login-form" class="space-y-4">
+                <input type="email" id="login-email" placeholder="EMAIL" class="text-center font-mono tracking-widest" required>
+                <input type="password" id="login-password" placeholder="PASSWORD" class="text-center font-mono tracking-widest" required>
+                <button type="submit" class="btn btn-primary w-full">SIGN IN</button>
+            </form>
             <div id="auth-message" class="mt-4 text-xs text-red-500 text-center hidden"></div>
         </div>
     </div>
+
     <div id="app-content" class="hidden opacity-0 transition-opacity duration-500 flex-1 flex flex-col">
         <header class="border-b border-[#27272a] bg-[#09090b]/80 backdrop-blur sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
-                    <span class="font-bold tracking-tight">SACRILEGE <span class="text-gray-500 font-normal">| Admin</span></span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <a href="index.html" target="_blank" class="text-sm text-gray-400 hover:text-white flex items-center gap-2"><i data-lucide="external-link" width="14"></i> Live Site</a>
-                    <button onclick="logout()" class="text-sm text-red-500 hover:text-red-400">Logout</button>
-                </div>
+                <div class="flex items-center gap-3"><div class="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div><span class="font-bold tracking-tight">SACRILEGE <span class="text-gray-500 font-normal">| Admin</span></span></div>
+                <button onclick="logout()" class="text-sm text-red-500 hover:text-red-400">Logout</button>
             </div>
         </header>
+
         <div class="max-w-7xl mx-auto px-6 mt-6 w-full">
             <div class="flex gap-6 border-b border-[#27272a]">
                 <button id="tab-products" onclick="switchTab('products')" class="pb-3 text-sm font-bold tab-active">INVENTORY</button>
                 <button id="tab-collections" onclick="switchTab('collections')" class="pb-3 text-sm font-bold tab-inactive">COLLECTIONS</button>
                 <button id="tab-reviews" onclick="switchTab('reviews')" class="pb-3 text-sm font-bold tab-inactive">REVIEWS</button>
-                <button id="tab-contacts" onclick="switchTab('contacts')" class="pb-3 text-sm font-bold tab-inactive">CONTACTS</button>
+                <button id="tab-contacts" onclick="switchTab('contacts')" class="pb-3 text-sm font-bold tab-inactive">SETTINGS</button>
             </div>
         </div>
+
         <main class="max-w-7xl mx-auto px-6 py-8 w-full flex-1">
+            <!-- PRODUCTS VIEW -->
             <div id="view-products" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-1 space-y-8">
                     <div class="bg-[#18181b] rounded-xl border border-[#27272a] overflow-hidden">
                         <div class="p-4 border-b border-[#27272a] bg-[#27272a]/30 flex justify-between items-center">
-                            <h3 class="font-bold flex items-center gap-2" id="form-title"><i data-lucide="plus-circle" width="18"></i> Add New Product</h3>
-                            <button onclick="resetForm()" id="cancel-edit-btn" class="hidden text-xs text-red-500 hover:text-white">Cancel Edit</button>
+                            <h3 class="font-bold flex items-center gap-2" id="form-title">Add Artifact</h3>
+                            <button onclick="resetForm()" id="cancel-edit-btn" class="hidden text-xs text-red-500">Cancel</button>
                         </div>
                         <div class="p-6 space-y-4">
                             <form id="product-form" class="space-y-4">
                                 <input type="hidden" name="id" id="prod-id">
-                                <input name="name" id="prod-name" placeholder="PRODUCT NAME" required>
+                                <input name="name" id="prod-name" placeholder="NAME" required>
+                                <input name="category" id="prod-category" placeholder="CATEGORY (e.g. T-SHIRT)">
                                 <textarea name="description" id="prod-desc" placeholder="DESCRIPTION" rows="3"></textarea>
                                 <div class="grid grid-cols-2 gap-4">
-                                    <input name="price" id="prod-price" type="number" placeholder="PRICE ($)" required>
-                                    <input name="tag" id="prod-tag" placeholder="TAG (e.g. HEAVY)">
+                                    <input name="price" id="prod-price" type="number" placeholder="PRICE (L)" required>
+                                    <input name="tag" id="prod-tag" placeholder="TAG (e.g. NEW)">
                                 </div>
-                                <select name="collection_id" id="prod-col">
-                                    <!-- Populated via JS -->
-                                </select>
+                                <select name="collection_id" id="prod-col"></select>
                                 <div class="bg-[#27272a]/50 p-3 rounded border border-[#3f3f46]">
                                     <label class="block text-xs font-mono text-gray-500 mb-2">STOCK</label>
                                     <div class="grid grid-cols-4 gap-2">
-                                        <label class="checkbox-wrapper"><input type="checkbox" name="stock_s" id="stock-s" checked> <span class="text-xs font-bold">S</span></label>
-                                        <label class="checkbox-wrapper"><input type="checkbox" name="stock_m" id="stock-m" checked> <span class="text-xs font-bold">M</span></label>
-                                        <label class="checkbox-wrapper"><input type="checkbox" name="stock_l" id="stock-l" checked> <span class="text-xs font-bold">L</span></label>
-                                        <label class="checkbox-wrapper"><input type="checkbox" name="stock_xl" id="stock-xl" checked> <span class="text-xs font-bold">XL</span></label>
+                                        <label class="checkbox-wrapper"><input type="checkbox" id="stock-s" checked> S</label>
+                                        <label class="checkbox-wrapper"><input type="checkbox" id="stock-m" checked> M</label>
+                                        <label class="checkbox-wrapper"><input type="checkbox" id="stock-l" checked> L</label>
+                                        <label class="checkbox-wrapper"><input type="checkbox" id="stock-xl" checked> XL</label>
                                     </div>
                                 </div>
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-mono text-gray-500 mb-2">GALLERY</label>
-                                    <div id="gallery-manager" class="space-y-3">
-                                        <div id="gallery-list" class="grid grid-cols-2 gap-3 min-h-[100px] p-3 bg-[#27272a]/30 rounded border border-[#3f3f46]">
-                                            <!-- Gallery items will be added here -->
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <button type="button" id="btn-add-image-file" class="flex-1 text-xs py-2 bg-[#27272a] text-white rounded hover:bg-[#3f3f46] transition-colors flex items-center justify-center gap-2">
-                                                <i data-lucide="upload" width="14"></i> Upload Image
-                                            </button>
-                                            <button type="button" id="btn-add-image-url" class="flex-1 text-xs py-2 bg-transparent text-gray-500 border border-[#3f3f46] rounded hover:border-white hover:text-white transition-colors flex items-center justify-center gap-2">
-                                                <i data-lucide="link" width="14"></i> Add URL
-                                            </button>
-                                        </div>
-                                        <input type="file" id="gallery-file-input" accept="image/*" multiple class="hidden">
-                                        <input type="text" id="gallery-url-input" placeholder="https://..." class="hidden w-full">
-                                    </div>
-                                </div>
-                                <button type="submit" id="submit-btn" class="btn btn-primary w-full mt-2">Create Artifact</button>
+                                <div id="gallery-list" class="grid grid-cols-2 gap-3 p-3 bg-black/30 rounded"></div>
+                                <button type="button" id="btn-add-image-file" class="btn btn-outline w-full py-2 text-xs">Upload Images</button>
+                                <input type="file" id="gallery-file-input" multiple class="hidden">
+                                <button type="submit" id="submit-btn" class="btn btn-primary w-full">Save Artifact</button>
                             </form>
                         </div>
                     </div>
                 </div>
-                <div class="lg:col-span-2">
-                    <div class="bg-[#18181b] rounded-xl border border-[#27272a] min-h-[600px] flex flex-col">
-                        <div class="p-4 border-b border-[#27272a] bg-[#27272a]/30 flex justify-between items-center">
-                            <h3 class="font-bold flex items-center gap-2"><i data-lucide="package" width="18"></i> Inventory</h3>
-                            <button onclick="loadData()" class="p-2 hover:bg-white/10 rounded-full"><i data-lucide="refresh-cw" width="14"></i></button>
-                        </div>
-                        <div class="flex-1 overflow-x-auto">
-                            <!-- FIXED TABLE STRUCTURE -->
-                            <table class="w-full text-left border-collapse">
-                                <thead class="text-xs font-mono text-gray-500 border-b border-[#27272a]">
-                                    <tr>
-                                        <th class="p-4">PRODUCT</th>
-                                        <th class="p-4">STOCK</th>
-                                        <th class="p-4">PRICE</th>
-                                        <th class="p-4 text-right">ACTIONS</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="product-list" class="divide-y divide-[#27272a] text-sm"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div class="lg:col-span-2 overflow-x-auto bg-[#18181b] border border-[#27272a] rounded-xl">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-[#27272a]/30 font-mono text-gray-500">
+                            <tr><th class="p-4">ARTIFACT</th><th class="p-4">STOCK</th><th class="p-4">PRICE</th><th class="p-4"></th></tr>
+                        </thead>
+                        <tbody id="product-list" class="divide-y divide-[#27272a]"></tbody>
+                    </table>
                 </div>
             </div>
-            
+
+            <!-- COLLECTIONS VIEW -->
             <div id="view-collections" class="hidden grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="bg-[#18181b] rounded-xl border border-[#27272a] p-6">
-                    <h3 class="font-bold mb-4">Create Collection</h3>
+                <div class="bg-[#18181b] p-6 rounded-xl border border-[#27272a]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold" id="col-form-title">Collection Protocol</h3>
+                        <button onclick="resetCollectionForm()" id="cancel-col-edit-btn" class="hidden text-xs text-red-500">Cancel</button>
+                    </div>
                     <form id="collection-form" class="space-y-4">
-                        <input name="title" id="col-title" placeholder="COLLECTION TITLE" required>
-                        <button type="submit" class="btn btn-primary w-full">Create</button>
+                        <input type="hidden" name="id" id="col-id">
+                        <input name="title" id="col-title" placeholder="TITLE" required>
+                        <div class="space-y-2">
+                            <label class="text-xs font-mono text-gray-500">CUSTOM STATUS TEXT</label>
+                            <input name="label_text" id="col-label-text" placeholder="e.g. /// READY TO SHIP">
+                        </div>
+                        <div class="flex items-center gap-3 bg-[#27272a]/30 p-2 rounded border border-[#3f3f46]">
+                            <label class="text-xs font-mono text-gray-500">STATUS COLOR:</label>
+                            <input type="color" id="col-label-color" value="#DC2626" class="bg-transparent w-8 h-8 border-none cursor-pointer">
+                        </div>
+                        <button type="submit" id="col-submit-btn" class="btn btn-primary w-full">Create Collection</button>
                     </form>
                 </div>
-                <div class="bg-[#18181b] rounded-xl border border-[#27272a] p-6">
-                     <h3 class="font-bold mb-4">Manage Collections</h3>
-                     <div id="collections-list" class="space-y-2"></div>
-                </div>
+                <div id="collections-list" class="space-y-3"></div>
             </div>
 
-            <div id="view-reviews" class="hidden">
-                 <div class="bg-[#18181b] rounded-xl border border-[#27272a] min-h-[600px] flex flex-col">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6" id="reviews-grid"></div>
-                </div>
-            </div>
-
-            <div id="view-contacts" class="hidden">
-                <div class="bg-[#18181b] rounded-xl border border-[#27272a] p-6">
-                    <h3 class="font-bold mb-6">Contact Information & Settings</h3>
-                    <form id="contacts-form" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-mono text-gray-500 mb-2">WhatsApp (or phone number)</label>
-                            <input type="text" id="contact-whatsapp-input" placeholder="+1234567890 or https://wa.me/1234567890" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono text-gray-500 mb-2">Telegram</label>
-                            <input type="text" id="contact-telegram-input" placeholder="@username or https://t.me/username" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono text-gray-500 mb-2">Email</label>
-                            <input type="email" id="contact-email-input" placeholder="contact@example.com" class="w-full">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-mono text-gray-500 mb-2">ImgBB API Key <span class="text-red-500">*</span></label>
-                            <input type="text" id="imgbb-api-key-input" placeholder="Get your free API key at https://api.imgbb.com" class="w-full">
-                            <p class="text-[10px] text-gray-600 mt-1">Required for image uploads. Get free API key at <a href="https://api.imgbb.com" target="_blank" class="text-red-500 hover:underline">api.imgbb.com</a></p>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-full mt-4">Save Settings</button>
-                    </form>
-                </div>
-            </div>
+            <!-- REVIEWS VIEW -->
+             <div id="view-reviews" class="hidden"><div id="reviews-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div></div>
+             
+             <!-- CONTACTS VIEW -->
+             <div id="view-contacts" class="hidden">
+                <form id="contacts-form" class="bg-[#18181b] p-6 rounded-xl border border-[#27272a] space-y-4">
+                    <input id="contact-whatsapp-input" placeholder="WHATSAPP">
+                    <input id="contact-telegram-input" placeholder="TELEGRAM">
+                    <input id="contact-email-input" placeholder="EMAIL">
+                    <input id="imgbb-api-key-input" placeholder="IMGBB API KEY">
+                    <button type="submit" class="btn btn-primary w-full">Save</button>
+                </form>
+             </div>
         </main>
     </div>
     <script src="admin.js"></script>

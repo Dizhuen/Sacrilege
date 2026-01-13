@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SACRILEGE | ANXIOUS LUXURY</title>
     
+    <link rel="icon" type="image/png" href="favicon.png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=JetBrains+Mono:wght@100;400;800&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
@@ -35,17 +37,14 @@
 </head>
 <body class="relative min-h-screen">
 
-    <!-- PRELOADER -->
     <div id="preloader" class="fixed inset-0 z-[999] bg-black flex flex-col items-center justify-center font-mono text-red-600 transition-all duration-700">
         <div class="text-4xl md:text-5xl font-black tracking-tighter animate-pulse glitch-text" data-text="SACRILEGE">SACRILEGE</div>
         <div class="mt-4 text-[10px] text-neutral-600 flex gap-2"><span data-i18n="boot_sys">SYSTEM_BOOT</span><span class="animate-pulse">_</span></div>
         <div class="w-48 h-[2px] bg-neutral-900 mt-4 overflow-hidden"><div class="h-full bg-red-600 animate-[marquee_1s_linear_infinite]" style="width: 50%"></div></div>
     </div>
 
-    <!-- AUDIO -->
     <audio id="bg-audio" loop preload="auto"><source src="humloop.mp3" type="audio/mpeg"></audio>
 
-    <!-- LAYERS -->
     <div class="pointer-events-none fixed inset-0 z-[90] opacity-[0.12] mix-blend-overlay"><div class="absolute inset-0 noise-bg"></div></div>
     <div class="pointer-events-none fixed inset-0 z-[80] crt-overlay"></div>
     <div id="flashlight-layer"></div>
@@ -55,7 +54,6 @@
     <div id="cursor-dot" class="hardware-accel"></div>
     <div id="cursor-glitch" class="hardware-accel fixed pointer-events-none z-[10000] mix-blend-difference hidden"></div>
 
-    <!-- HEADER -->
     <header class="fixed top-0 w-full z-50 flex justify-between items-start md:items-center px-4 md:px-6 py-4 md:py-6 mix-blend-difference text-white">
         <div class="flex flex-col md:flex-row gap-2 md:gap-4 mt-1 md:mt-0">
             <button id="menu-btn" class="hover:text-red-600 magnet-btn p-1.5 md:p-2 hover-trigger relative group" onclick="toggleMenu()"><i data-lucide="menu" size="18"></i></button>
@@ -72,34 +70,31 @@
         </button>
     </header>
 
-    <!-- MAIN -->
     <main id="site-content" class="w-full relative z-10">
-        <!-- HERO -->
         <section id="hero" class="relative h-screen w-full flex items-center justify-center overflow-hidden">
             <div id="hero-blob" class="absolute w-[800px] h-[800px] bg-red-900/20 rounded-full blur-[150px] animate-pulse-fast pointer-events-none"></div>
             
             <div class="z-10 text-center flex flex-col items-center gap-6 mix-blend-normal px-4 reveal-item active w-full">
-                <div id="hero-parallax" class="parallax-wrapper h-[15vw] md:h-[12vw] w-full relative">
-                    <h2 class="parallax-layer layer-back font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.05" data-i18n="hero_loading">LOADING...</h2>
-                    <h2 class="parallax-layer layer-mid font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.1" data-i18n="hero_loading">LOADING...</h2>
-                    <h2 class="parallax-layer layer-front font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.15" data-i18n="hero_loading">LOADING...</h2>
+                <!-- Parallax Wrapper -->
+                <div id="hero-parallax" class="parallax-wrapper h-[25vw] md:h-[20vw] w-full relative">
+                    <h2 class="parallax-layer layer-back font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.05">LOADING...</h2>
+                    <h2 class="parallax-layer layer-mid font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.1">LOADING...</h2>
+                    <h2 class="parallax-layer layer-front font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.15">LOADING...</h2>
                 </div>
-                <div class="overflow-hidden w-full flex justify-center">
-                    <span id="hero-sub" class="text-red-600 font-wide font-bold text-[4vw] md:text-[2vw] tracking-[0.3em] md:tracking-[0.8em] block mt-4 border-y border-red-900/50 py-2 translate-y-full transition-transform duration-1000 delay-500">...</span>
+                <!-- Margin Top restored to prevent overlap -->
+                <div class="overflow-hidden w-full flex justify-center mt-8 md:mt-12"> 
+                    <span id="hero-sub" class="text-red-600 font-wide font-bold text-[4vw] md:text-[2vw] tracking-[0.3em] md:tracking-[0.8em] block border-y border-red-900/50 py-2 translate-y-full transition-transform duration-1000 delay-500">...</span>
                 </div>
                 <p class="font-mono text-[10px] md:text-xs text-theme-muted mt-10 animate-bounce" data-i18n="scroll_explore">SCROLL TO EXPLORE</p>
             </div>
         </section>
 
-        <!-- TICKER -->
         <div class="border-y border-theme bg-theme-secondary py-4 overflow-hidden relative z-10 ticker-container">
             <div class="ticker-wrap font-wide text-[10px] md:text-xs font-bold tracking-[0.3em] text-theme-muted" id="ticker-content"></div>
         </div>
 
-        <!-- DYNAMIC SHOP -->
         <div id="shop-container" class="px-4 py-20 md:py-32 max-w-[1600px] mx-auto relative z-10"></div>
 
-        <!-- REVIEWS -->
         <section class="px-4 py-20 max-w-[1600px] mx-auto relative z-10 border-t border-theme">
              <div class="w-full reveal-item">
                  <h4 class="font-mono text-xs text-theme-muted mb-6 flex justify-between">
@@ -113,25 +108,15 @@
         <footer id="footer" class="bg-theme-secondary border-t border-theme py-20 px-6 relative z-10 text-center font-mono text-xs text-theme-muted reveal-item">
             <div class="mb-4 text-theme-color font-bold" data-i18n="footer_motto">NO EXIT. NO RETURN.</div>
             <div id="footer-contacts" class="flex flex-wrap justify-center items-center gap-6 md:gap-8 mb-6 mt-8">
-                <a id="contact-whatsapp" href="#" target="_blank" class="flex items-center gap-2 text-theme-muted hover:text-red-600 transition-colors hover-trigger" style="display: none;">
-                    <i data-lucide="message-circle" size="16"></i>
-                    <span>WhatsApp</span>
-                </a>
-                <a id="contact-telegram" href="#" target="_blank" class="flex items-center gap-2 text-theme-muted hover:text-red-600 transition-colors hover-trigger" style="display: none;">
-                    <i data-lucide="send" size="16"></i>
-                    <span>Telegram</span>
-                </a>
-                <a id="contact-email" href="#" target="_blank" class="flex items-center gap-2 text-theme-muted hover:text-red-600 transition-colors hover-trigger" style="display: none;">
-                    <i data-lucide="mail" size="16"></i>
-                    <span>Email</span>
-                </a>
+                <a id="contact-whatsapp" href="#" target="_blank" class="flex items-center gap-2 text-theme-muted hover:text-red-600 transition-colors hover-trigger" style="display: none;"><i data-lucide="message-circle" size="16"></i><span>WhatsApp</span></a>
+                <a id="contact-telegram" href="#" target="_blank" class="flex items-center gap-2 text-theme-muted hover:text-red-600 transition-colors hover-trigger" style="display: none;"><i data-lucide="send" size="16"></i><span>Telegram</span></a>
+                <a id="contact-email" href="#" target="_blank" class="flex items-center gap-2 text-theme-muted hover:text-red-600 transition-colors hover-trigger" style="display: none;"><i data-lucide="mail" size="16"></i><span>Email</span></a>
             </div>
-            © 2026 SACRILEGE INDUSTRIES.
+            <!-- UPDATED FOOTER COPYRIGHT -->
+            © 2026 SACRILEGE
         </footer>
     </main>
 
-    <!-- PRODUCT MODAL -->
-    <!-- (Оставлен без изменений согласно инструкции) -->
     <div id="product-modal" class="fixed inset-0 z-[150] hidden flex flex-col md:justify-center items-center bg-black/80 p-0 md:p-4 transition-opacity duration-300 overflow-hidden h-full safe-area-padding">
         <div id="modal-sigils-container" class="absolute inset-0 pointer-events-none select-none overflow-hidden" style="z-index: 1; opacity: 0.3;"></div>
         <div class="bg-theme-main border border-red-900/50 w-full md:max-w-6xl h-full md:h-[85vh] md:max-h-[90vh] relative shadow-[0_0_50px_rgba(220,38,38,0.1)] flex flex-col md:flex-row overflow-hidden modal-enter rounded-none md:rounded-sm" id="modal-content" style="z-index: 10;">
@@ -151,17 +136,17 @@
                         <span class="text-xs font-mono text-theme-muted" id="modal-category">CATEGORY</span>
                     </div>
                     <h2 id="modal-product-name" class="font-serif text-3xl md:text-5xl text-theme-color leading-[0.85] tracking-tight mb-4 glitch-text" data-text="">PRODUCT</h2>
-                    <p id="modal-product-price" class="font-mono text-2xl text-red-500 mb-8 border-b border-theme pb-4">$0.00</p>
+                    <p id="modal-product-price" class="font-mono text-2xl text-red-500 mb-8 border-b border-theme pb-4">0 L</p>
                     <div class="font-mono text-xs text-theme-muted mb-8 leading-relaxed overflow-hidden relative min-h-[60px]">
                         <p id="modal-desc" class="break-words will-change-contents">CONNECTING TO DATABASE...</p>
                     </div>
                     <div class="space-y-4 mb-8">
                         <div class="font-mono text-[10px] text-theme-muted tracking-widest" data-i18n="size_select">SIZE_SELECTION</div>
                         <div class="grid grid-cols-4 gap-2" id="size-selector">
-                            <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" onclick="selectSize('S', this)">S</button>
-                            <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" onclick="selectSize('M', this)">M</button>
-                            <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" onclick="selectSize('L', this)">L</button>
-                            <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" onclick="selectSize('XL', this)">XL</button>
+                            <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" data-size="S">S</button>
+                            <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" data-size="M">M</button>
+                            <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" data-size="L">L</button>
+                            <button class="size-btn border border-theme py-3 text-sm text-theme-color hover:bg-theme-color hover:text-theme-main hover:border-theme transition-all duration-200 hover-trigger" data-size="XL">XL</button>
                         </div>
                     </div>
                     <button id="confirm-add-btn" class="w-full bg-red-600 text-black font-wide font-bold py-4 text-sm tracking-widest hover:bg-white hover:text-red-600 transition-all duration-300 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed hover-trigger relative overflow-hidden group mb-8" disabled>
@@ -169,9 +154,7 @@
                         <div class="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-0"></div>
                     </button>
                     <div class="border-t border-theme pt-6">
-                        <h5 class="text-xs font-mono text-theme-muted mb-4 cursor-pointer hover:text-theme-color flex justify-between items-center" onclick="toggleReviewForm()">
-                             <span data-i18n="leave_review">[+] LEAVE PROTOCOL ENTRY</span>
-                        </h5>
+                        <h5 class="text-xs font-mono text-theme-muted mb-4 cursor-pointer hover:text-theme-color flex justify-between items-center" onclick="toggleReviewForm()"><span data-i18n="leave_review">[+] LEAVE PROTOCOL ENTRY</span></h5>
                         <div id="product-review-area" class="space-y-3 overflow-hidden transition-[max-height,opacity] duration-500 ease-in-out max-h-[500px] opacity-100">
                             <input id="rev-name" placeholder="IDENTIFIER (NAME)" class="bg-theme-secondary text-theme-color text-xs md:text-sm p-3 w-full border border-theme focus:border-red-600 font-mono" data-i18n-ph="ph_name">
                             <textarea id="rev-satisfied" placeholder="SATISFIED ABOUT..." rows="2" class="bg-theme-secondary text-theme-color text-xs md:text-sm p-3 w-full border border-theme focus:border-green-600 font-mono resize-none" data-i18n-ph="ph_sat"></textarea>
@@ -184,7 +167,6 @@
         </div>
     </div>
 
-    <!-- CHECKOUT MODAL -->
     <div id="checkout-modal" class="fixed inset-0 z-[250] hidden flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 safe-area-padding">
         <div class="bg-theme-main border border-theme max-w-lg w-full relative shadow-2xl overflow-y-auto max-h-[90vh] rounded-sm">
             <div class="p-6 border-b border-theme flex justify-between items-center sticky top-0 bg-theme-main z-10">
@@ -196,71 +178,37 @@
                     <div class="grid grid-cols-1 gap-4"><input name="fullname" placeholder="FULL NAME" required data-i18n-ph="ph_fullname"><input name="phone" placeholder="PHONE (WHATSAPP)" required data-i18n-ph="ph_phone"></div>
                     <input name="address" placeholder="STREET ADDRESS" required data-i18n-ph="ph_address">
                     <div class="grid grid-cols-2 gap-4"><input name="city" placeholder="CITY" required data-i18n-ph="ph_city"><input name="zip" placeholder="ZIP CODE" required data-i18n-ph="ph_zip"></div>
-                    <div class="mt-6 border-t border-theme pt-4 flex justify-between font-serif text-xl text-theme-color"><span data-i18n="total">TOTAL</span><span id="checkout-total">$0</span></div>
+                    <div class="mt-6 border-t border-theme pt-4 flex justify-between font-serif text-xl text-theme-color"><span data-i18n="total">TOTAL</span><span id="checkout-total">0 L</span></div>
                     <button type="submit" class="w-full bg-white text-black font-wide font-bold py-4 mt-6 hover:bg-red-600 hover:text-white transition-all duration-300 hover-trigger" data-i18n="btn_order">PLACE ORDER</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- REIMAGINED NAVIGATION MENU (PREMIUM) -->
-    <div id="nav-menu" class="fixed inset-0 z-[300] bg-black/98 backdrop-blur-2xl hidden flex flex-col md:flex-row items-stretch justify-between pointer-events-none">
+    <!-- NAVIGATION MENU (PREMIUM) -->
+    <!-- FIX: Added default classes opacity-0, invisible, pointer-events-none to work with CSS transitions -->
+    <div id="nav-menu" class="fixed inset-0 z-[300] bg-black/98 backdrop-blur-2xl flex flex-col md:flex-row items-stretch justify-between opacity-0 invisible pointer-events-none transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)]">
         <div id="nav-menu-backdrop" onclick="toggleMenu()" class="absolute inset-0"></div>
-        
-        <!-- Left Side: Serial & Meta (Desktop only) -->
         <div class="hidden md:flex w-1/4 border-r border-white/5 flex-col justify-between p-12 relative z-10 opacity-0 transition-opacity duration-1000 delay-300" id="nav-meta-left">
-            <div class="font-mono text-[10px] text-neutral-500 space-y-2">
-                <p>STATUS: AUTHORIZED_ACCESS</p>
-                <p>SESSION_ID: 0x777_SACRILEGE</p>
-            </div>
-            <div class="font-mono text-[10px] text-neutral-500 transform -rotate-90 origin-left translate-y-[-100px] tracking-[0.5em] whitespace-nowrap">
-                ESTABLISHED MMXXVI
-            </div>
+            <div class="font-mono text-[10px] text-neutral-500 space-y-2"><p>STATUS: AUTHORIZED_ACCESS</p><p>SESSION_ID: 0x777_SACRILEGE</p></div>
+            <div class="font-mono text-[10px] text-neutral-500 transform -rotate-90 origin-left translate-y-[-100px] tracking-[0.5em] whitespace-nowrap">ESTABLISHED MMXXVI</div>
         </div>
-
-        <!-- Center: Core Navigation -->
         <div class="flex-1 flex flex-col items-center justify-center relative z-10 px-6">
             <button onclick="toggleMenu()" class="absolute top-8 md:top-12 right-8 text-neutral-500 hover:text-white transition-colors hover-trigger z-20"><i data-lucide="x" size="32"></i></button>
-            
             <nav class="flex flex-col items-center gap-4 md:gap-8">
-                <a href="#hero" onclick="toggleMenu(); scrollToSection('hero')" class="nav-menu-item group flex items-center gap-6">
-                    <span class="font-mono text-xs text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">01</span>
-                    <span class="font-serif text-4xl md:text-7xl text-white tracking-widest uppercase group-hover:text-red-600 transition-all duration-500">Index</span>
-                </a>
-                <a href="#shop-container" onclick="toggleMenu(); scrollToSection('shop-container')" class="nav-menu-item group flex items-center gap-6">
-                    <span class="font-mono text-xs text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">02</span>
-                    <span class="font-serif text-4xl md:text-7xl text-white tracking-widest uppercase group-hover:text-red-600 transition-all duration-500">Collections</span>
-                </a>
-                <a href="#reviews-list" onclick="toggleMenu(); scrollToSection('reviews-list')" class="nav-menu-item group flex items-center gap-6">
-                    <span class="font-mono text-xs text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">03</span>
-                    <span class="font-serif text-4xl md:text-7xl text-white tracking-widest uppercase group-hover:text-red-600 transition-all duration-500">Protocols</span>
-                </a>
-                <a href="#footer" onclick="toggleMenu(); scrollToSection('footer')" class="nav-menu-item group flex items-center gap-6">
-                    <span class="font-mono text-xs text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">04</span>
-                    <span class="font-serif text-4xl md:text-7xl text-white tracking-widest uppercase group-hover:text-red-600 transition-all duration-500">Contact</span>
-                </a>
+                <a href="#hero" onclick="scrollToSection('hero', event)" class="nav-menu-item group flex items-center gap-6"><span class="font-mono text-xs text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">01</span><span class="font-serif text-4xl md:text-7xl text-white tracking-widest uppercase group-hover:text-red-600 transition-all duration-500">Index</span></a>
+                <a href="#shop-container" onclick="scrollToSection('shop-container', event)" class="nav-menu-item group flex items-center gap-6"><span class="font-mono text-xs text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">02</span><span class="font-serif text-4xl md:text-7xl text-white tracking-widest uppercase group-hover:text-red-600 transition-all duration-500">Collections</span></a>
+                <a href="#reviews-list" onclick="scrollToSection('reviews-list', event)" class="nav-menu-item group flex items-center gap-6"><span class="font-mono text-xs text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">03</span><span class="font-serif text-4xl md:text-7xl text-white tracking-widest uppercase group-hover:text-red-600 transition-all duration-500">Protocols</span></a>
+                <a href="#footer" onclick="scrollToSection('footer', event)" class="nav-menu-item group flex items-center gap-6"><span class="font-mono text-xs text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">04</span><span class="font-serif text-4xl md:text-7xl text-white tracking-widest uppercase group-hover:text-red-600 transition-all duration-500">Contact</span></a>
             </nav>
-
-            <div class="mt-16 md:mt-24 text-center border-t border-white/10 pt-8 w-48 transition-all duration-1000 delay-500 opacity-0" id="nav-slogan">
-                <p class="font-wide text-[10px] md:text-xs text-red-600 tracking-[0.8em] uppercase">Covered in sins</p>
-            </div>
+            <div class="mt-16 md:mt-24 text-center border-t border-white/10 pt-8 w-48 transition-all duration-1000 delay-500 opacity-0" id="nav-slogan"><p class="font-wide text-[10px] md:text-xs text-red-600 tracking-[0.8em] uppercase">Covered in sins</p></div>
         </div>
-
-        <!-- Right Side: Contact Details (Desktop only) -->
         <div class="hidden md:flex w-1/4 border-l border-white/5 flex-col justify-end p-12 relative z-10 opacity-0 transition-opacity duration-1000 delay-300" id="nav-meta-right">
-             <div class="font-mono text-[10px] text-neutral-500 text-right space-y-4">
-                <p class="text-white">GENERAL ENQUIRIES</p>
-                <p>CONTACT@SACRILEGE.INDUSTRY</p>
-                <div class="pt-4 flex justify-end gap-4">
-                    <span class="hover:text-white cursor-pointer">IG</span>
-                    <span class="hover:text-white cursor-pointer">TG</span>
-                    <span class="hover:text-white cursor-pointer">WA</span>
-                </div>
-            </div>
+             <!-- UPDATED EMAIL -->
+             <div class="font-mono text-[10px] text-neutral-500 text-right space-y-4"><p class="text-white">GENERAL ENQUIRIES</p><p>sacrilege.cult@gmail.com</p></div>
         </div>
     </div>
 
-    <!-- CART DRAWER -->
     <div id="cart-drawer" class="fixed inset-y-0 right-0 z-[200] w-full md:w-[450px] bg-theme-main border-l border-red-900 drawer flex flex-col">
         <div class="p-6 border-b border-theme flex justify-between items-center bg-theme-main">
             <h2 class="font-mono text-xl text-theme-color">:: <span data-i18n="cart_title">CART</span> [<span id="cart-count-header">0</span>]</h2>
@@ -268,7 +216,7 @@
         </div>
         <div id="cart-items" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4"></div>
         <div class="p-6 border-t border-theme bg-theme-secondary backdrop-blur pb-10 md:pb-6">
-            <div class="flex justify-between font-serif text-xl mb-4 text-theme-color"><span data-i18n="total">TOTAL</span><span>$<span id="cart-total">0</span></span></div>
+            <div class="flex justify-between font-serif text-xl mb-4 text-theme-color"><span data-i18n="total">TOTAL</span><span><span id="cart-total">0</span> L</span></div>
             <button onclick="openCheckout()" class="w-full bg-red-600 text-black font-wide font-bold py-4 hover:bg-white transition-all duration-300 hover-trigger" data-i18n="btn_checkout">CHECKOUT</button>
         </div>
     </div>

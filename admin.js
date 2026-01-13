@@ -1,16 +1,34 @@
 const SUPABASE_URL = 'https://cjfxgotljzolykpsuxej.supabase.co';
+// ПРОВЕРЬТЕ, ЧТО ЭТОТ КЛЮЧ АКТУАЛЕН В ВАШЕЙ ПАНЕЛИ SUPABASE (Settings -> API -> anon public)
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqZnhnb3RsanpvbHlrcHN1eGVqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc5NzI3OTUsImV4cCI6MjA4MzU0ODc5NX0.fZaXCZh9cAZUIq2A-69Xo0wzH_2zKU4k-4VSFRpRCb4';
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let currentProducts = [];
+let currentCollections = [];
+
+// --- AUTH HANDLING ---
 
 async function checkAuth() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-        showApp();
-        return true;
+    const { data: { session }, error } = await sb.auth.getSession();
+    
+    // Если ошибка сессии или сессии нет
+    if (error || !session) {
+        // Если мы не на экране входа, показываем его
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('app-content').classList.add('hidden');
+        return false;
     }
-    return false;
+
+    // Если сессия есть, проверяем не истекла ли она запросом
+    showApp();
+    return true;
+}
+
+// Функция принудительного выхода при ошибке токена
+async function forceLogout() {
+    console.warn("Session expired. Logging out...");
+    await sb.auth.signOut();
+    window.location.reload();
 }
 
 function showApp() {
@@ -58,52 +76,16 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     }
 });
 
-document.getElementById('magic-link-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('magic-email').value.trim();
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    submitBtn.innerHTML = `<div class="loader"></div> Sending...`;
-    submitBtn.disabled = true;
-    
-    try {
-        const { error } = await sb.auth.signInWithOtp({
-            email: email,
-            options: {
-                emailRedirectTo: window.location.origin + window.location.pathname
-            }
-        });
-        
-        if (error) throw error;
-        showAuthError("Check your email for the magic link!");
-    } catch (err) {
-        showAuthError(err.message || "Failed to send magic link");
-    } finally {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    }
-});
-
-document.getElementById('switch-to-magic-link').addEventListener('click', () => {
-    document.getElementById('login-tab').classList.add('hidden');
-    document.getElementById('magic-link-tab').classList.remove('hidden');
-});
-
-document.getElementById('switch-to-password').addEventListener('click', () => {
-    document.getElementById('magic-link-tab').classList.add('hidden');
-    document.getElementById('login-tab').classList.remove('hidden');
-});
-
 sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) {
         showApp();
-    } else if (event === 'SIGNED_OUT') {
+    } else if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESH_REVOKED') {
         document.getElementById('auth-screen').classList.remove('hidden');
         document.getElementById('app-content').classList.add('hidden');
     }
 });
 
+// Start
 checkAuth();
 
 function switchTab(tab) {
@@ -116,13 +98,17 @@ function switchTab(tab) {
     if(tab === 'contacts') loadContacts();
 }
 
-// Gallery Management
+// --- GALLERY ---
 let galleryImages = [];
 let draggedIndex = null;
 
 async function getImgbbApiKey() {
     try {
-        const { data } = await sb.from('site_config').select('imgbb_api_key').single();
+        const { data, error } = await sb.from('site_config').select('imgbb_api_key').single();
+        if (error) {
+            if (error.code === 'PGRST303' || error.message.includes('JWT')) forceLogout();
+            return '';
+        }
         return data?.imgbb_api_key || '';
     } catch(e) {
         console.warn("Failed to load imgbb API key");
@@ -220,14 +206,6 @@ document.getElementById('btn-add-image-file')?.addEventListener('click', () => {
     document.getElementById('gallery-file-input').click();
 });
 
-document.getElementById('btn-add-image-url')?.addEventListener('click', () => {
-    const urlInput = document.getElementById('gallery-url-input');
-    urlInput.classList.toggle('hidden');
-    if(!urlInput.classList.contains('hidden')) {
-        urlInput.focus();
-    }
-});
-
 document.getElementById('gallery-file-input')?.addEventListener('change', async (e) => {
     const files = Array.from(e.target.files);
     if(files.length === 0) return;
@@ -256,55 +234,79 @@ document.getElementById('gallery-file-input')?.addEventListener('change', async 
     }
 });
 
-document.getElementById('gallery-url-input')?.addEventListener('keypress', (e) => {
-    if(e.key === 'Enter') {
-        const url = e.target.value.trim();
-        if(url && (url.startsWith('http://') || url.startsWith('https://'))) {
-            galleryImages.push(url);
-            renderGallery();
-            e.target.value = '';
-            e.target.classList.add('hidden');
-        } else {
-            showToast("Invalid URL", "error");
-        }
-    }
-});
-
-// Initialize gallery on load
 if(document.getElementById('gallery-list')) {
     renderGallery();
 }
 
+// Helper to parse collections
+const parseCol = (c) => {
+    const parts = (c.title || '').split('|||');
+    return {
+        id: c.id,
+        title: parts[0] ? parts[0].trim() : 'Untitled',
+        label: parts[1] ? parts[1].trim() : '',
+        color: parts[2] ? parts[2].trim() : '#DC2626'
+    };
+};
+
 async function loadData() {
     try {
         // Collections
-        const { data: cols } = await sb.from('site_collections').select('*').order('created_at', {ascending: true});
+        const { data: cols, error: colError } = await sb.from('site_collections').select('*').order('created_at', {ascending: true});
         
+        if (colError) {
+            if (colError.code === 'PGRST303' || colError.message.includes('JWT')) {
+                forceLogout();
+                return;
+            }
+            throw colError;
+        }
+        
+        currentCollections = (cols || []).map(parseCol);
+
         // Populate select
         const select = document.getElementById('prod-col');
         if(select) {
             select.innerHTML = '<option value="">No Collection (Archive)</option>' + 
-                (cols || []).map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+                currentCollections.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
         }
         
         // Populate list
         const colList = document.getElementById('collections-list');
         if(colList) {
-            colList.innerHTML = (cols || []).map(c => `
+            colList.innerHTML = currentCollections.map(c => `
                 <div class="flex justify-between items-center p-3 bg-black/30 rounded border border-[#3f3f46]">
-                    <span>${c.title}</span>
-                    <button onclick="deleteCollection(${c.id})" class="text-red-500 hover:text-white"><i data-lucide="trash-2" width="14"></i></button>
+                    <div>
+                        <div class="font-bold text-lg">${c.title}</div>
+                        <div class="text-xs font-mono tracking-widest mt-1" style="color: ${c.color}">
+                            ${c.label || '/// NO STATUS'}
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                         <button onclick="editCollection(${c.id})" class="p-2 text-gray-500 hover:text-white"><i data-lucide="pencil" width="14"></i></button>
+                         <button onclick="deleteCollection(${c.id})" class="p-2 text-red-500 hover:text-white"><i data-lucide="trash-2" width="14"></i></button>
+                    </div>
                 </div>
             `).join('');
         }
 
         // Products
-        const { data: products } = await sb.from('products').select('*').order('id', { ascending: false });
+        const { data: products, error: prodError } = await sb.from('products').select('*').order('id', { ascending: false });
+        
+        if (prodError) {
+             if (prodError.code === 'PGRST303' || prodError.message.includes('JWT')) {
+                forceLogout();
+                return;
+            }
+            throw prodError;
+        }
+
         currentProducts = products || [];
         renderTable(currentProducts);
         lucide.createIcons();
     } catch (e) {
         console.error("Load Data Error:", e);
+        showToast("Error loading data: " + e.message, "error");
     }
 }
 
@@ -321,7 +323,7 @@ function renderTable(products) {
         <tr class="hover:bg-white/5 transition-colors group">
             <td class="p-4 flex items-center gap-3"><div class="w-10 h-10 rounded bg-[#27272a] overflow-hidden border border-[#3f3f46]"><img src="${p.image}" class="w-full h-full object-cover"></div><div><div class="font-bold text-white">${p.name}</div><div class="text-xs text-gray-500 font-mono">${p.category || '///'}</div></div></td>
             <td class="p-4 font-mono text-[10px] space-x-1">${stockDisplay}</td>
-            <td class="p-4 font-mono text-gray-300">$${p.price}</td>
+            <td class="p-4 font-mono text-gray-300">${p.price} L</td>
             <td class="p-4 text-right">
                     <button onclick="editProduct(${p.id})" class="p-2 hover:bg-[#27272a] rounded text-gray-400 hover:text-white"><i data-lucide="pencil" width="16"></i></button>
                     <button onclick="deleteProduct(${p.id})" class="p-2 hover:bg-red-900/30 rounded text-red-600 hover:text-red-500"><i data-lucide="trash-2" width="16"></i></button>
@@ -329,6 +331,7 @@ function renderTable(products) {
         </tr>`}).join('');
 }
 
+// --- PRODUCT EDITING ---
 let isEditing = false;
 
 window.editProduct = (id) => {
@@ -341,15 +344,14 @@ window.editProduct = (id) => {
 
     document.getElementById('prod-id').value = product.id;
     document.getElementById('prod-name').value = product.name;
+    document.getElementById('prod-category').value = product.category || ''; 
     document.getElementById('prod-desc').value = product.description || '';
     document.getElementById('prod-price').value = product.price;
     document.getElementById('prod-tag').value = product.tag;
     
-    // Set collection
     const colSelect = document.getElementById('prod-col');
     if(colSelect) colSelect.value = product.collection_id || "";
     
-    // Load gallery
     galleryImages = [];
     if(product.image) galleryImages.push(product.image);
     if(product.gallery && Array.isArray(product.gallery)) {
@@ -377,8 +379,6 @@ window.resetForm = () => {
     document.getElementById('cancel-edit-btn').classList.add('hidden');
     galleryImages = [];
     renderGallery();
-    const urlInput = document.getElementById('gallery-url-input');
-    if(urlInput) urlInput.classList.add('hidden');
     lucide.createIcons();
 };
 
@@ -410,6 +410,7 @@ if(prodForm) {
 
             const payload = {
                 name: formData.get('name'), 
+                category: formData.get('category'), 
                 description: formData.get('description'),
                 price: formData.get('price'), 
                 tag: formData.get('tag'), 
@@ -434,8 +435,42 @@ if(prodForm) {
             showToast(isEditing ? "Artifact Updated" : "Artifact Created", "success");
             resetForm();
             loadData();
-        } catch (err) { showToast(err.message, "error"); } finally { btn.innerHTML = originalText; }
+        } catch (err) { 
+            if (err.message && err.message.includes('JWT')) forceLogout();
+            showToast(err.message, "error"); 
+        } finally { btn.innerHTML = originalText; }
     });
+}
+
+// --- COLLECTION EDITING ---
+let isCollectionEditing = false;
+
+window.editCollection = (id) => {
+    const col = currentCollections.find(c => c.id === id);
+    if (!col) return;
+    
+    isCollectionEditing = true;
+    document.getElementById('col-id').value = col.id;
+    document.getElementById('col-title').value = col.title;
+    document.getElementById('col-label-text').value = col.label;
+    document.getElementById('col-label-color').value = col.color;
+    
+    document.getElementById('col-form-title').innerText = "Edit Collection";
+    document.getElementById('col-submit-btn').innerText = "Update Collection";
+    document.getElementById('cancel-col-edit-btn').classList.remove('hidden');
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+window.resetCollectionForm = () => {
+    isCollectionEditing = false;
+    document.getElementById('collection-form').reset();
+    document.getElementById('col-id').value = '';
+    document.getElementById('col-form-title').innerText = "Collection Protocol";
+    document.getElementById('col-submit-btn').innerText = "Create Collection";
+    document.getElementById('cancel-col-edit-btn').classList.add('hidden');
+    // Default color reset
+    document.getElementById('col-label-color').value = "#DC2626";
 }
 
 // Collection Form Submit
@@ -443,22 +478,58 @@ const colForm = document.getElementById('collection-form');
 if(colForm) {
     colForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const id = document.getElementById('col-id').value;
         const title = document.getElementById('col-title').value;
+        const labelText = document.getElementById('col-label-text').value; 
+        const labelColor = document.getElementById('col-label-color').value; 
+        
         if(!title) return;
-        const { error } = await sb.from('site_collections').insert([{ title }]);
-        if(!error) { showToast("Collection Created", "success"); e.target.reset(); loadData(); }
+        
+        const packedTitle = `${title.trim()} ||| ${labelText.trim()} ||| ${labelColor.trim()}`;
+
+        const payload = { title: packedTitle };
+        
+        let error;
+        
+        if (id) {
+            const { error: dbError } = await sb.from('site_collections').update(payload).eq('id', id);
+            error = dbError;
+        } else {
+            const { error: dbError } = await sb.from('site_collections').insert([payload]);
+            error = dbError;
+        }
+
+        if(!error) { 
+            showToast(id ? "Collection Updated" : "Collection Created", "success"); 
+            resetCollectionForm();
+            loadData(); 
+        } else { 
+            if (error.code === 'PGRST303') forceLogout();
+            showToast(error.message, "error"); 
+        }
     });
 }
 
 window.deleteCollection = async (id) => {
     if(confirm('Delete collection? Products will be moved to Archive.')) {
-        await sb.from('site_collections').delete().eq('id', id);
-        loadData();
+        const { error } = await sb.from('site_collections').delete().eq('id', id);
+        if(error) {
+             if(error.code === 'PGRST303') forceLogout();
+             showToast(error.message, 'error');
+        } else {
+            loadData();
+        }
     }
 };
 
 async function loadReviews() {
-    const { data: reviews } = await sb.from('reviews').select('*, products(name)').order('created_at', { ascending: false });
+    const { data: reviews, error } = await sb.from('reviews').select('*, products(name)').order('created_at', { ascending: false });
+    
+    if(error) {
+        if(error.code === 'PGRST303') { forceLogout(); return; }
+        return;
+    }
+
     const grid = document.getElementById('reviews-grid');
     if(!grid) return;
     if(!reviews || reviews.length === 0) { grid.innerHTML = '<div class="text-gray-500 col-span-3 text-center py-10">No reviews found.</div>'; return; }
@@ -484,18 +555,40 @@ async function loadReviews() {
 
 window.deleteReview = async (id) => {
     if(confirm('Delete review?')) {
-        await sb.from('reviews').delete().eq('id', id);
-        loadReviews();
-        showToast("Review Deleted", "success");
+        const { error } = await sb.from('reviews').delete().eq('id', id);
+        if(error) {
+            if(error.code === 'PGRST303') forceLogout();
+            showToast(error.message, 'error');
+        } else {
+            loadReviews();
+            showToast("Review Deleted", "success");
+        }
     }
 };
 
-window.deleteProduct = async (id) => { if(confirm('Delete artifact?')) { await sb.from('products').delete().eq('id', id); loadData(); } };
+window.deleteProduct = async (id) => { 
+    if(confirm('Delete artifact?')) { 
+        const { error } = await sb.from('products').delete().eq('id', id); 
+        if(error) {
+            if(error.code === 'PGRST303') forceLogout();
+            showToast(error.message, 'error');
+        } else {
+            loadData(); 
+        }
+    } 
+};
 
 async function loadContacts() {
     try {
         const { data, error } = await sb.from('site_config').select('*').single();
-        if(error && error.code !== 'PGRST116') { console.warn("Contacts load failed:", error); return; }
+        if(error) { 
+            if(error.code === 'PGRST303' || error.message.includes('JWT')) {
+                forceLogout();
+                return;
+            }
+            if(error.code !== 'PGRST116') console.warn("Contacts load failed:", error); 
+            return; 
+        }
         if(data) {
             const waInput = document.getElementById('contact-whatsapp-input');
             if(waInput) waInput.value = data.contact_whatsapp || data.contact_telegram || '';
@@ -522,6 +615,9 @@ if(contactsForm) {
             const email = document.getElementById('contact-email-input').value.trim();
             const imgbbKey = document.getElementById('imgbb-api-key-input').value.trim();
             const { data: existing, error: fetchError } = await sb.from('site_config').select('*').single();
+            
+            if (fetchError && fetchError.code === 'PGRST303') { forceLogout(); return; }
+
             const payload = {};
             if(whatsapp) payload.contact_whatsapp = whatsapp;
             else payload.contact_whatsapp = null;
@@ -531,6 +627,7 @@ if(contactsForm) {
             else payload.contact_email = null;
             if(imgbbKey) payload.imgbb_api_key = imgbbKey;
             else payload.imgbb_api_key = null;
+            
             if(existing && !fetchError) {
                 const { error: updateError } = await sb.from('site_config').update(payload).eq('id', existing.id);
                 if(updateError) throw updateError;
@@ -539,7 +636,10 @@ if(contactsForm) {
                 if(insertError) throw insertError;
             }
             showToast("Contacts Saved", "success");
-        } catch(err) { showToast(err.message, "error"); } finally { btn.innerHTML = originalText; }
+        } catch(err) { 
+            if(err.code === 'PGRST303') forceLogout();
+            showToast(err.message, "error"); 
+        } finally { btn.innerHTML = originalText; }
     });
 }
 
