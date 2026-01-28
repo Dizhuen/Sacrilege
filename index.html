@@ -45,11 +45,15 @@
 
     <audio id="bg-audio" loop preload="auto"><source src="humloop.mp3" type="audio/mpeg"></audio>
 
-    <div class="pointer-events-none fixed inset-0 z-[90] opacity-[0.12] mix-blend-overlay"><div class="absolute inset-0 noise-bg"></div></div>
+    <!-- Noise layer moved to CSS optimization -->
+    <div class="pointer-events-none fixed inset-0 z-[90] opacity-[0.08] mix-blend-overlay"><div class="absolute inset-0 noise-bg"></div></div>
     <div class="pointer-events-none fixed inset-0 z-[80] crt-overlay"></div>
-    <div id="flashlight-layer"></div>
+    
+    <!-- Optimized Flashlight Layer -->
+    <div id="flashlight-layer" class="hardware-accel"></div>
     <div id="psychosis-layer"></div>
     <div id="chaos-overlay"></div>
+    
     <div id="cursor-ring" class="hardware-accel"></div>
     <div id="cursor-dot" class="hardware-accel"></div>
     <div id="cursor-glitch" class="hardware-accel fixed pointer-events-none z-[10000] mix-blend-difference hidden"></div>
@@ -72,16 +76,16 @@
 
     <main id="site-content" class="w-full relative z-10">
         <section id="hero" class="relative h-screen w-full flex items-center justify-center overflow-hidden">
-            <div id="hero-blob" class="absolute w-[800px] h-[800px] bg-red-900/20 rounded-full blur-[150px] animate-pulse-fast pointer-events-none"></div>
+            <div id="hero-blob" class="absolute w-[800px] h-[800px] bg-red-900/20 rounded-full blur-[150px] animate-pulse-fast pointer-events-none hardware-accel"></div>
             
             <div class="z-10 text-center flex flex-col items-center gap-6 mix-blend-normal px-4 reveal-item active w-full">
                 <!-- Parallax Wrapper -->
                 <div id="hero-parallax" class="parallax-wrapper h-[25vw] md:h-[20vw] w-full relative">
-                    <h2 class="parallax-layer layer-back font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.05">LOADING...</h2>
-                    <h2 class="parallax-layer layer-mid font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.1">LOADING...</h2>
-                    <h2 class="parallax-layer layer-front font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter" data-layer="0.15">LOADING...</h2>
+                    <h2 class="parallax-layer layer-back font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter hardware-accel" data-layer="0.05">LOADING...</h2>
+                    <h2 class="parallax-layer layer-mid font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter hardware-accel" data-layer="0.1">LOADING...</h2>
+                    <h2 class="parallax-layer layer-front font-serif text-[12vw] md:text-[11vw] leading-[0.8] tracking-tighter hardware-accel" data-layer="0.15">LOADING...</h2>
                 </div>
-                <!-- Margin Top restored to prevent overlap -->
+                
                 <div class="overflow-hidden w-full flex justify-center mt-8 md:mt-12"> 
                     <span id="hero-sub" class="text-red-600 font-wide font-bold text-[4vw] md:text-[2vw] tracking-[0.3em] md:tracking-[0.8em] block border-y border-red-900/50 py-2 translate-y-full transition-transform duration-1000 delay-500">...</span>
                 </div>
@@ -112,7 +116,6 @@
                 <a id="contact-telegram" href="#" target="_blank" class="flex items-center gap-2 text-theme-muted hover:text-red-600 transition-colors hover-trigger" style="display: none;"><i data-lucide="send" size="16"></i><span>Telegram</span></a>
                 <a id="contact-email" href="#" target="_blank" class="flex items-center gap-2 text-theme-muted hover:text-red-600 transition-colors hover-trigger" style="display: none;"><i data-lucide="mail" size="16"></i><span>Email</span></a>
             </div>
-            <!-- UPDATED FOOTER COPYRIGHT -->
             © 2026 SACRILEGE
         </footer>
     </main>
@@ -185,8 +188,6 @@
         </div>
     </div>
 
-    <!-- NAVIGATION MENU (PREMIUM) -->
-    <!-- FIX: Added default classes opacity-0, invisible, pointer-events-none to work with CSS transitions -->
     <div id="nav-menu" class="fixed inset-0 z-[300] bg-black/98 backdrop-blur-2xl flex flex-col md:flex-row items-stretch justify-between opacity-0 invisible pointer-events-none transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)]">
         <div id="nav-menu-backdrop" onclick="toggleMenu()" class="absolute inset-0"></div>
         <div class="hidden md:flex w-1/4 border-r border-white/5 flex-col justify-between p-12 relative z-10 opacity-0 transition-opacity duration-1000 delay-300" id="nav-meta-left">
@@ -204,7 +205,6 @@
             <div class="mt-16 md:mt-24 text-center border-t border-white/10 pt-8 w-48 transition-all duration-1000 delay-500 opacity-0" id="nav-slogan"><p class="font-wide text-[10px] md:text-xs text-red-600 tracking-[0.8em] uppercase">Covered in sins</p></div>
         </div>
         <div class="hidden md:flex w-1/4 border-l border-white/5 flex-col justify-end p-12 relative z-10 opacity-0 transition-opacity duration-1000 delay-300" id="nav-meta-right">
-             <!-- UPDATED EMAIL -->
              <div class="font-mono text-[10px] text-neutral-500 text-right space-y-4"><p class="text-white">GENERAL ENQUIRIES</p><p>sacrilege.cult@gmail.com</p></div>
         </div>
     </div>

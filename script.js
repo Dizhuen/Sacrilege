@@ -136,6 +136,15 @@ class PsychosisSystem {
     stop() { this.isActive = false; this.layer.classList.remove('active'); this.layer.innerHTML = ''; this.timers.forEach(t => clearTimeout(t)); this.timers = []; }
     loop() {
         if(!this.isActive) return;
+        
+        // OPTIMIZATION: Check if we already have too many elements
+        if (this.layer.childElementCount > 10) {
+            const nextTime = Math.random() * 5000 + 3000;
+            const t = setTimeout(() => this.loop(), nextTime);
+            this.timers.push(t);
+            return;
+        }
+
         const text = document.createElement('div');
         text.className = 'psychosis-text';
         text.innerText = this.phrases[Math.floor(Math.random() * this.phrases.length)];
@@ -144,8 +153,13 @@ class PsychosisSystem {
         text.style.left = Math.random() * 90 + '%';
         text.style.top = Math.random() * 90 + '%';
         text.style.transform = `rotate(${Math.random() * 360 + 'deg'})`;
-        this.layer.appendChild(text);
-        setTimeout(() => { if(text.parentNode) text.parentNode.removeChild(text); }, 150);
+        
+        // Use requestAnimationFrame for DOM insertion to avoid blocking
+        requestAnimationFrame(() => {
+            this.layer.appendChild(text);
+            setTimeout(() => { if(text.parentNode) text.parentNode.removeChild(text); }, 200);
+        });
+
         const nextTime = Math.random() * 10000 + 8000; 
         const t = setTimeout(() => this.loop(), nextTime);
         this.timers.push(t);
@@ -229,6 +243,7 @@ function initInteractions() {
     const dot = document.getElementById("cursor-dot");
     const ring = document.getElementById("cursor-ring");
     const glitchContainer = document.getElementById("cursor-glitch");
+    const flashlight = document.getElementById("flashlight-layer");
 
     const resetIdle = () => {
         if (document.body.classList.contains('idle')) {
@@ -244,23 +259,45 @@ function initInteractions() {
         }, 30000);
     };
 
-    document.documentElement.style.setProperty('--cursor-x', `50vw`);
-    document.documentElement.style.setProperty('--cursor-y', `50vh`);
-
+    // OPTIMIZED CURSOR FUNCTION
     const setCursor = (x, y) => {
-        document.documentElement.style.setProperty('--cursor-x', `${x}px`);
-        document.documentElement.style.setProperty('--cursor-y', `${y}px`);
+        // PERFORMANCE FIX: DO NOT update :root variables to avoid full page layout recalculation
+        
+        // 1. Update Flashlight Position (Direct style update)
+        if(flashlight) {
+            flashlight.style.setProperty('--cursor-x', `${x}px`);
+            flashlight.style.setProperty('--cursor-y', `${y}px`);
+        }
+
+        // 2. Update Cursor Dot
         if(!isTouch && dot) {
             gsap.to(dot, { left: x, top: y, duration: 0 });
             if (!glitchContainer.classList.contains('hidden')) {
                 glitchContainer.style.left = x + 'px';
                 glitchContainer.style.top = y + 'px';
             }
+            
+            // 3. Parallax Logic (Lightweight transform)
             const xPos = (x / windowWidth - 0.5) * 2, yPos = (y / windowHeight - 0.5) * 2;
             parallaxLayers.forEach(layer => {
                 const speed = parseFloat(layer.getAttribute('data-layer'));
                 gsap.to(layer, { x: xPos * 100 * speed, y: yPos * 100 * speed, duration: 0.5, ease: "power2.out" });
             });
+        }
+
+        // 4. Update Spotlight Cards (Localized updates, no global thrashing)
+        // Using getElementsByClassName is faster than querySelectorAll for frequent updates
+        const cards = document.getElementsByClassName('spotlight-card');
+        for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            const rect = card.getBoundingClientRect();
+            // Calculate relative coordinates for spotlight effect
+            const cardX = x - rect.left;
+            const cardY = y - rect.top;
+            
+            // Only update if cursor is somewhat close to avoid unnecessary work (optional optimization)
+            card.style.setProperty('--card-x', `${cardX}px`);
+            card.style.setProperty('--card-y', `${cardY}px`);
         }
     };
 
@@ -378,7 +415,6 @@ function renderSections(collections) {
             const orphans = productsData.filter(p => !p.collection_id);
             const borderClass = (isLast && orphans.length === 0) ? '' : 'border-b border-theme';
             
-            // FIX: Parsing metadata from title (hack to avoid DB migration)
             const parts = (col.title || '').split('|||');
             const displayTitle = parts[0] ? parts[0].trim() : col.title;
             const labelText = parts[1] ? parts[1].trim() : TRANSLATIONS[currentLang].ready_ship;
@@ -406,7 +442,6 @@ function renderSections(collections) {
 
 function getProductCardHTML(p) {
     const stock = p.stock || {S:true, M:true, L:true, XL:true};
-    // FIX: Better stock check (handles strings "true", booleans, etc)
     const isS = !!stock.S || stock.S === 'true';
     const isM = !!stock.M || stock.M === 'true';
     const isL = !!stock.L || stock.L === 'true';
@@ -474,7 +509,6 @@ window.openProductModal = function(productId) {
     const labelEl = document.getElementById('system-label');
     if(labelEl) labelEl.innerText = systemLabel;
     
-    // FIX: Using dataset for exact size matching and checking "true" strings
     const stock = product.stock || {S:true, M:true, L:true, XL:true};
     const btn = document.getElementById('confirm-add-btn');
     const btnText = document.getElementById('btn-text');
@@ -482,7 +516,7 @@ window.openProductModal = function(productId) {
     if(btn) { btn.disabled = true; btn.classList.add('grayscale', 'cursor-not-allowed', 'opacity-50', 'bg-neutral-800'); btn.classList.remove('bg-red-600'); btn.onclick = addToCart; }
     
     document.querySelectorAll('.size-btn').forEach(btn => {
-        const size = btn.getAttribute('data-size'); // More reliable than innerText
+        const size = btn.getAttribute('data-size'); 
         const available = stock[size] === true || stock[size] === 'true' || stock[size] === 'on';
         
         btn.classList.remove('bg-theme-color', 'text-theme-main', 'border-theme-color', 'disabled');
@@ -685,7 +719,6 @@ window.toggleMenu = function() {
     if(!menu) return;
     const isOpening = !menu.classList.contains('active');
     
-    // Toggle active state
     if (isOpening) {
         menu.classList.add('active');
         document.body.classList.add('menu-open');
@@ -710,11 +743,9 @@ function handleMenuEscape(e) {
 window.scrollToSection = function(sectionId, event) {
     if (event) event.preventDefault();
     
-    // Close menu first
     const menu = document.getElementById('nav-menu');
     if(menu && menu.classList.contains('active')) {
         toggleMenu();
-        // Wait for animation to finish
         setTimeout(() => performScroll(sectionId), 600);
     } else {
         performScroll(sectionId);
